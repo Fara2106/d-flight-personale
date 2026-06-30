@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Visual brainstorm companion (solo locale)
+.superpowers/
+
+# Env & locali
+.env
+.env.local
+*.local
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
