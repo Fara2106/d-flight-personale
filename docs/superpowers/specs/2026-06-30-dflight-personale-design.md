@@ -27,6 +27,8 @@ I dati provengono dal **file ufficiale ED-269** che l'utente importa dal proprio
 | Estetica | Stile "B — Chiaro & essenziale" (mappe iOS), tema Chiaro / Scuro / Sistema, accenti blu |
 | Architettura | PWA 100% statica, nessun account, dati locali (IndexedDB) |
 
+> **Perché solo import (no auto-login).** Una PWA nel browser non può scaricare il file da D-Flight cross-origin (lo blocca il **CORS**) nemmeno con credenziali salvate in locale — non è un'API pubblica. Usare credenziali sul dispositivo per l'auto-aggiornamento richiederebbe un **proxy serverless** (reintroduce un server, zona grigia ToS) oppure un **guscio nativo** (Capacitor): rimandato a un'eventuale versione nativa futura. L'import manuale è reso **a zero-attrito** (un tap "Aggiorna" + "condividi all'app" su mobile + promemoria staleness).
+
 ---
 
 ## 3. Vincoli e note di responsabilità (legale / sicurezza)
