@@ -69,7 +69,8 @@ La **quota massima** proviene dal campo `upperLimit` dell'ED-269 (riferimento AG
 
 Azioni sempre disponibili, senza disegnare nulla:
 - **Tap su una zona** → scheda con nome, tipo restrizione, limiti di quota, validità temporale, condizioni, contatto autorità, link "verifica su D-Flight".
-- **Cerca un luogo** (geocoding) e **"dove sono"** (GPS).
+- **Cerca un luogo** (geocoding).
+- **La mia posizione (GPS)** — puntino blu con cerchio di precisione e pulsante "centra su di me". Usa il GPS del telefono in campo (preciso) o la posizione approssimata su desktop (Wi-Fi/rete). La posizione **resta sul dispositivo** (nessun invio), richiede il consenso del browser e HTTPS, e funziona **offline** se i tile dell'area sono già in cache. Può fare da punto di partenza per la verifica on-demand.
 - **Filtri**: mostra/nascondi categorie di zone, filtro per quota.
 - *(Opzionale)* toggle **"colora per il mio drone"**: ricolora le zone in base alla classe del drone attivo. **Off di default.**
 
@@ -95,7 +96,8 @@ Interruttore **Chiaro / Scuro / Sistema**, persistito, che guida sia l'UI sia lo
 ### Stack
 - **PWA 100% statica**, nessun backend, nessun account.
 - **React + TypeScript + Vite**.
-- **MapLibre GL JS** per la mappa, con stile vettoriale **chiaro/scuro** (tile da provider gratuito, es. MapTiler/OpenFreeMap — da confermare).
+- **MapLibre GL JS** per la mappa, con stile vettoriale **chiaro/scuro**. Default: **OpenFreeMap** (tile vettoriali gratuiti, **senza chiave/account** — coerente con l'approccio "nessuna credenziale"); alternativa più rifinita: **MapTiler** (free tier, una chiave pubblica).
+- **Geocoder (ricerca luoghi)**: **Photon** (senza chiave); fallback Nominatim rispettandone la policy d'uso.
 - **Tailwind CSS** per l'UI pulita iOS-like.
 - **Service worker (Workbox)** per offline + installabilità.
 - **IndexedDB** (wrapper `idb`/Dexie) per zone, profili e spot.
@@ -200,8 +202,8 @@ Account/cloud sync, notifiche push, invio registrazioni/autorizzazioni a D-Fligh
 
 1. Percorso esatto di download del file ED-269 dal portale (per l'onboarding).
 2. Copertura delle **riserve temporanee** nel file mensile (mitigazione: link ufficiale sempre presente).
-3. Scelta provider tile mappa + limiti cache offline.
-4. Scelta geocoder gratuito con policy d'uso accettabile (es. Nominatim/Photon/MapTiler).
+3. Provider tile mappa → **default OpenFreeMap** (keyless); valutare MapTiler se serve più polish/affidabilità. Resta da definire la strategia di **cache tile offline**.
+4. Geocoder → **default Photon** (keyless); fallback Nominatim rispettandone la policy d'uso.
 5. Codifica accurata e conservativa delle tabelle normative del `rulesEngine`.
 6. Nome/marchio per un'eventuale pubblicazione (§16).
 
