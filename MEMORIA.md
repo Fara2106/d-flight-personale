@@ -28,8 +28,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - [ ] **Esecuzione Fase 1** (branch `feat/fase1-viewer`) — IN CORSO
   - [x] **Task 1 — Scaffold** (commit `041f3df`, review **Approved**, solo minori)
   - [x] **Cleanup Task 1** (commit `32d027d`) — finding minori risolti
-  - [ ] Task 2 — Tema (light/dark/system)   ← **PROSSIMO**
-  - [ ] Task 3 — Tipi ED-269 + parser
+  - [x] **Task 2 — Tema** (commits `1f4f53b`+`5ffd2fa`, review **Approved**)
+  - [ ] Task 3 — Tipi ED-269 + parser   ← **PROSSIMO**
   - [ ] Task 4 — Normalizzatore zone
   - [ ] Task 5 — Diff zone
   - [ ] Task 6 — Archivio IndexedDB
