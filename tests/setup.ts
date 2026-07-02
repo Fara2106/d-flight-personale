@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
 
 // Polyfill localStorage for jsdom
 if (!globalThis.localStorage) {
