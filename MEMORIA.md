@@ -27,6 +27,7 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - [x] MEMORIA creata — commit `7eb4c49`
 - [ ] **Esecuzione Fase 1** (branch `feat/fase1-viewer`) — IN CORSO
   - [x] **Task 1 — Scaffold** (commit `041f3df`, review **Approved**, solo minori)
+  - [x] **Cleanup Task 1** (commit `32d027d`) — finding minori risolti
   - [ ] Task 2 — Tema (light/dark/system)   ← **PROSSIMO**
   - [ ] Task 3 — Tipi ED-269 + parser
   - [ ] Task 4 — Normalizzatore zone
@@ -72,12 +73,15 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **Tailwind pinnato a v3** (il piano usa sintassi v3).
 - `vite.config.ts` importa `defineConfig` da **`vitest/config`** (TS6/Vite8 non espone `test` su `vite`).
 
-**Da sistemare (finding minori del Task 1)** — farlo come piccolo commit di cleanup prima del Task 2, oppure all'inizio del prossimo task:
-- `index.html`: titolo `vite-tmp` → `D-Flight personale`; `lang="en"` → `lang="it"`.
-- Rimuovere file scaffold inutilizzati: `src/App.css`, `src/assets/hero.png`, `src/assets/react.svg`, `src/assets/vite.svg`, `public/icons.svg`.
-- (Preventivo) aggiungere `"vitest/globals"` ai `types` in `tsconfig.app.json`.
+**Finding minori del Task 1 — RISOLTI** nel commit di cleanup `32d027d`:
+- `index.html`: titolo → `D-Flight personale`; `lang="it"`. ✅
+- Rimossi file scaffold inutilizzati (`src/App.css`, `src/assets/*`, `public/icons.svg`). ✅ (`public/favicon.svg` tenuto: referenziato da index.html.)
+- `"vitest/globals"` in `tsconfig.app.json`: **non applicato** di proposito — i test non sono in `tsconfig.app` (`include:["src"]`) e Vitest non typecheck-a; lo esporrebbe a `src` senza utilità.
+
+**Gotcha tsconfig (passare a OGNI implementer):** `verbatimModuleSyntax:true` → import di soli tipi con `import type`/`import { type X }` (es. Task 2 `ThemeToggle`: `import { ThemePref }` va corretto in `import { type ThemePref }`); `noUnusedLocals`/`noUnusedParameters` su `src`; i test del task possono passare senza coprire tutti i file `src`, quindi far eseguire anche `npx tsc -b` e riportarne l'esito.
 
 ---
 
 ## Log
 - **2026-06-30** — Brainstorming completato; specifica e piano scritti e committati. Avviata esecuzione subagent-driven Fase 1 su `feat/fase1-viewer`. **Task 1 (Scaffold) completato e approvato** (`041f3df`). Sessione fermata su richiesta per proseguire in una nuova chat usando questa MEMORIA come handoff.
+- **2026-06-30 (ripresa)** — Nuova chat: letta MEMORIA + ledger + piano. Pre-flight plan review: nessun conflitto bloccante (solo quirk d'ambiente già previsti). **Cleanup Task 1 committato** (`32d027d`): titolo/lingua it, rimossi file scaffold; typecheck `tsc -b` verde e test verdi. Ripresa esecuzione subagent-driven dal Task 2.
