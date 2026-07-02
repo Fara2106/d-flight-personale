@@ -35,8 +35,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 6 — Archivio IndexedDB** (commit `5d148df`, review **Approved**)
   - [x] **Task 7 — Import orchestratore + pulsante** (commit `c9c9e4a`, review **Approved**)
   - [x] **Task 8 — Trasformazioni mappa** (commit `c17d387`, review **Approved**; decisione utente: etichetta prohibited = "⛔ 0 m" fisso)
-  - [ ] Task 9 — Stile mappa + MapView base   ← **PROSSIMO**
-  - [ ] Task 10 — Render zone + popup
+  - [x] **Task 9 — Stile mappa + MapView base** (commit `2415c06`, review **Approved**)
+  - [ ] Task 10 — Render zone + popup   ← **PROSSIMO**
   - [ ] Task 11 — Chrome UI (legenda, banner, disclaimer, empty state)
   - [ ] Task 12 — Ricerca luoghi (Photon)
   - [ ] Task 13 — Posizione GPS
