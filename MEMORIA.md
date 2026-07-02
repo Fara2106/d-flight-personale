@@ -30,8 +30,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Cleanup Task 1** (commit `32d027d`) — finding minori risolti
   - [x] **Task 2 — Tema** (commits `1f4f53b`+`5ffd2fa`, review **Approved**)
   - [x] **Task 3 — Tipi ED-269 + parser** (commit `97cdd0c`, review **Approved**)
-  - [ ] Task 4 — Normalizzatore zone   ← **PROSSIMO**
-  - [ ] Task 5 — Diff zone
+  - [x] **Task 4 — Normalizzatore zone** (commit `a5cdfc0`, review **Approved**)
+  - [ ] Task 5 — Diff zone   ← **PROSSIMO**
   - [ ] Task 6 — Archivio IndexedDB
   - [ ] Task 7 — Import orchestratore + pulsante
   - [ ] Task 8 — Trasformazioni mappa (etichetta quota + GeoJSON)
