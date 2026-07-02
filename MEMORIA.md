@@ -29,8 +29,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 1 — Scaffold** (commit `041f3df`, review **Approved**, solo minori)
   - [x] **Cleanup Task 1** (commit `32d027d`) — finding minori risolti
   - [x] **Task 2 — Tema** (commits `1f4f53b`+`5ffd2fa`, review **Approved**)
-  - [ ] Task 3 — Tipi ED-269 + parser   ← **PROSSIMO**
-  - [ ] Task 4 — Normalizzatore zone
+  - [x] **Task 3 — Tipi ED-269 + parser** (commit `97cdd0c`, review **Approved**)
+  - [ ] Task 4 — Normalizzatore zone   ← **PROSSIMO**
   - [ ] Task 5 — Diff zone
   - [ ] Task 6 — Archivio IndexedDB
   - [ ] Task 7 — Import orchestratore + pulsante
