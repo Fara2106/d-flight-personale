@@ -31,8 +31,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 2 — Tema** (commits `1f4f53b`+`5ffd2fa`, review **Approved**)
   - [x] **Task 3 — Tipi ED-269 + parser** (commit `97cdd0c`, review **Approved**)
   - [x] **Task 4 — Normalizzatore zone** (commit `a5cdfc0`, review **Approved**)
-  - [ ] Task 5 — Diff zone   ← **PROSSIMO**
-  - [ ] Task 6 — Archivio IndexedDB
+  - [x] **Task 5 — Diff zone** (commit `0a33f97`, review **Approved**)
+  - [ ] Task 6 — Archivio IndexedDB   ← **PROSSIMO**
   - [ ] Task 7 — Import orchestratore + pulsante
   - [ ] Task 8 — Trasformazioni mappa (etichetta quota + GeoJSON)
   - [ ] Task 9 — Stile mappa + MapView base
