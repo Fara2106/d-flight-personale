@@ -40,6 +40,8 @@ export function MapView(
 ) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const zonesRef = useRef<Zone[]>(zones);
+  zonesRef.current = zones;
 
   useEffect(() => {
     if (!el.current || map.current) return;
@@ -49,13 +51,18 @@ export function MapView(
     });
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    m.on('load', () => addZoneLayers(m, zones));
+    m.on('load', () => addZoneLayers(m, zonesRef.current));
     m.on('click', 'zones-fill', (e) => {
       const f = e.features?.[0]; if (f && onZoneClick) onZoneClick(f.properties || {});
-      if (f) new maplibregl.Popup({ closeButton: true })
-        .setLngLat(e.lngLat)
-        .setHTML(`<strong>${f.properties?.name ?? ''}</strong><br/>Quota max: ${f.properties?.label ?? '—'}`)
-        .addTo(m);
+      if (f) {
+        const p = f.properties ?? {};
+        const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
+        const ceiling = p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—';
+        new maplibregl.Popup({ closeButton: true })
+          .setLngLat(e.lngLat)
+          .setHTML(`<strong>${p.name ?? ''}</strong><br/>${p.label ?? '—'}<br/>Quota max: ${ceiling}`)
+          .addTo(m);
+      }
     });
     m.on('mouseenter', 'zones-fill', () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', 'zones-fill', () => { m.getCanvas().style.cursor = ''; });
