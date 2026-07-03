@@ -60,9 +60,19 @@ export function MapView(
         const p = f.properties ?? {};
         const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
         const ceiling = p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—';
+
+        const container = document.createElement('div');
+        const strong = document.createElement('strong');
+        strong.textContent = p.name ?? '';
+        container.appendChild(strong);
+        container.appendChild(document.createElement('br'));
+        container.appendChild(document.createTextNode(p.label ?? '—'));
+        container.appendChild(document.createElement('br'));
+        container.appendChild(document.createTextNode(`Quota max: ${ceiling}`));
+
         new maplibregl.Popup({ closeButton: true })
           .setLngLat(e.lngLat)
-          .setHTML(`<strong>${p.name ?? ''}</strong><br/>${p.label ?? '—'}<br/>Quota max: ${ceiling}`)
+          .setDOMContent(container)
           .addTo(m);
       }
     });

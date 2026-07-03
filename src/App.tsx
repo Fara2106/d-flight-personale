@@ -29,7 +29,7 @@ export default function App() {
     if (geo.position) setFlyTo({ lat: geo.position.lat, lon: geo.position.lon });
   }, [geo.position]);
 
-  async function refresh() { setZones(await loadZones()); setMeta(await loadMeta()); }
+  async function refresh() { setZones(await loadZones()); setMeta(await loadMeta()); setErr(null); }
 
   return (
     <div style={{ position:'absolute', inset:0 }}>
@@ -58,7 +58,7 @@ export default function App() {
           <EmptyState onImported={async () => { await refresh(); }} onError={setErr} />
         </div>
       )}
-      {err && <div style={{ position:'absolute', top:64, left:12, right:12, color:'#ef4444' }}>{err}</div>}
+      {(err ?? geo.error) && <div style={{ position:'absolute', top:64, left:12, right:12, color:'#ef4444' }}>{err ?? geo.error}</div>}
     </div>
   );
 }
