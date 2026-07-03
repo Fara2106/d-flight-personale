@@ -37,8 +37,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 8 — Trasformazioni mappa** (commit `c17d387`, review **Approved**; decisione utente: etichetta prohibited = "⛔ 0 m" fisso)
   - [x] **Task 9 — Stile mappa + MapView base** (commit `2415c06`, review **Approved**)
   - [x] **Task 10 — Render zone + popup** (commits `da43796`+`b700fe0`, review **Approved**; popup con soffitto formale AGL/AMSL, fix race zones/load)
-  - [ ] Task 11 — Chrome UI (legenda, banner, disclaimer, empty state)   ← **PROSSIMO**
-  - [ ] Task 12 — Ricerca luoghi (Photon)
+  - [x] **Task 11 — Chrome UI** (commit `a42dc9f`, review **Approved**; legenda, banner staleness, disclaimer, empty state; wiring in App al Task 14)
+  - [ ] Task 12 — Ricerca luoghi (Photon)   ← **PROSSIMO**
   - [ ] Task 13 — Posizione GPS
   - [ ] Task 14 — Integrazione App + verifica E2E
 - [ ] Fase 2 — profili + motore regole + pianificazione (piano da scrivere)
