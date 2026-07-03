@@ -43,9 +43,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 10 — Render zone + popup** (commits `da43796`+`b700fe0`, review **Approved**; popup con soffitto formale AGL/AMSL, fix race zones/load)
   - [x] **Task 11 — Chrome UI** (commit `a42dc9f`, review **Approved**; legenda, banner staleness, disclaimer, empty state; wiring in App al Task 14)
   - [x] **Task 12 — Ricerca luoghi (Photon)** (commits `a4f3f66`+`d3a57e2`, review **Approved** dopo fix: bbox Italia, abort richieste stale)
-  - [ ] Task 13 — Posizione GPS   ← **PROSSIMO**
-  - [ ] Task 13 — Posizione GPS
-  - [ ] Task 14 — Integrazione App + verifica E2E
+  - [x] **Task 13 — Posizione GPS** (commit `4e93122`, review **Approved**, zero Critical/Important)
+  - [ ] Task 14 — Integrazione App + verifica E2E   ← **PROSSIMO**
 - [ ] Fase 2 — profili + motore regole + pianificazione (piano da scrivere)
 - [ ] Fase 3 — offline / PWA (piano da scrivere)
 
