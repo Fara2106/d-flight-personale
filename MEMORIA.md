@@ -29,7 +29,7 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - [x] Brainstorming + specifica — commit `8cc269c`, `c5b709b`
 - [x] Piano Fase 1 — commit `6512e5b`
 - [x] MEMORIA creata — commit `7eb4c49`
-- [ ] **Esecuzione Fase 1** (branch `feat/fase1-viewer`) — IN CORSO
+- [x] **Esecuzione Fase 1** — COMPLETATA e **mergiata su `main`** (2026-07-03, fast-forward a `1bf2747`; branch `feat/fase1-viewer` eliminato)
   - [x] **Task 1 — Scaffold** (commit `041f3df`, review **Approved**, solo minori)
   - [x] **Cleanup Task 1** (commit `32d027d`) — finding minori risolti
   - [x] **Task 2 — Tema** (commits `1f4f53b`+`5ffd2fa`, review **Approved**)
@@ -57,7 +57,7 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 **Metodo:** subagent-driven-development (superpowers). Nella nuova chat di' qualcosa come:
 > "Continua l'esecuzione del piano `docs/superpowers/plans/2026-06-30-dflight-personale-fase1-viewer.md` col metodo subagent-driven, riprendendo dal **Task 2** (il Task 1 è già completo, vedi `.superpowers/sdd/progress.md`). Branch `feat/fase1-viewer`."
 
-**Stato git:** branch `feat/fase1-viewer`, HEAD `041f3df`. Su `main` ci sono solo i documenti (spec, piano, MEMORIA). L'app vive sul branch.
+**Stato git:** tutto su `main` (Fase 1 mergiata il 2026-07-03, branch eliminato). La sezione "Ciclo per ogni task" qui sotto resta come riferimento di metodo per i piani di Fase 2/3.
 
 **Ciclo per ogni task** (Task N):
 1. `task-brief` → estrai il brief: `<SK>/scripts/task-brief docs/superpowers/plans/2026-06-30-dflight-personale-fase1-viewer.md N`
