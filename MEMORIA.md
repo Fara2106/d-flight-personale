@@ -17,6 +17,16 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **Stack:** React + TS + Vite, MapLibre (CARTO Positron/Dark Matter, keyless), Tailwind v3, IndexedDB (`idb`), Vitest; geocoder **Photon**.
 - **Hosting (deciso 2026-07-03):** pubblicare su **GitHub Pages** (gratis) a fine Fase 1, così l'app è usabile anche da Safari/iPhone (PWA installabile da "Aggiungi alla schermata Home").
 
+## TODO prossima sessione (design già approvato a voce, 2026-07-03)
+- **Popup mappa — 2 migliorie** (feedback E2E utente: testo popup sbiadito col tema scuro; zone sovrapposte confuse):
+  1. Stile popup MapLibre nei token tema: in `src/index.css` regole per `.maplibregl-popup-content` e `.maplibregl-popup-tip` con `var(--surface)`/`var(--text)`/`var(--shadow)`, angoli arrotondati. (Causa: popup bianco fisso + testo che eredita il colore tema → chiaro-su-bianco in dark.)
+  2. Popup multi-zona: al click mostrare TUTTE le zone sotto al punto (decisione utente: opzione "tutte in un popup"). Funzione pura testabile `buildPopupContent(zones)` che deduplica, ordina per restrittività (prohibited→auth_required→conditional→none), rende pallino colore + nome + etichetta + quota max per ciascuna, scroll oltre ~4 zone. Chiude anche il finding minore "popup formatting non testato".
+  - Metodo: mini-spec + piano + esecuzione come gli altri task (brainstorming già fatto, design approvato in chat; resta la conferma formale della spec scritta).
+- **Verifica E2E (Step 5 Task 14)** — PARZIALE: app si avvia, empty state ok, import ok, zone visibili, popup funziona (con i difetti sopra). Da ricontrollare dopo le migliorie: ricerca, GPS, temi, persistenza al reload.
+
+## Gotcha ambiente (2026-07-03)
+- Il progetto vive in `~/Documents` **sincronizzata con iCloud Drive**: iCloud ha creato 17 duplicati di conflitto (`* 2.*`, es. `index 2.html`) che rompevano Vite/Tailwind con `ETIMEDOUT`, più file "dataless" (solo nel cloud). Risolto: duplicati eliminati (erano untracked), `brctl download .`, riavvio dev server. **Può ripresentarsi**: se Vite dà ETIMEDOUT o errori su file `* 2.*`, ripulire con `find . -name "* 2.*" -not -path "./node_modules/*" -delete` e `brctl download .`. Valutare in futuro lo spostamento del progetto fuori da iCloud.
+
 ## Idee future (da ragionare insieme, non in Fase 1-3)
 - **Estensione ad altri paesi europei (proposta 2026-07-03, da discutere):** il formato ED-269 è standard UE — ogni paese pubblica le proprie zone UAS sul portale nazionale. Servirebbe: supporto multi-dataset (oggi un import sostituisce il precedente), ricerca luoghi non limitata all'Italia (oggi bbox Italia su Photon), e attenzione alle deroghe nazionali nel motore regole di Fase 2 (tarato su regole italiane).
 
