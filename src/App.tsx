@@ -25,12 +25,16 @@ export default function App() {
     setZones(await loadZones()); setMeta(await loadMeta());
   })(); }, []);
 
+  useEffect(() => {
+    if (geo.position) setFlyTo({ lat: geo.position.lat, lon: geo.position.lon });
+  }, [geo.position]);
+
   async function refresh() { setZones(await loadZones()); setMeta(await loadMeta()); }
 
   return (
     <div style={{ position:'absolute', inset:0 }}>
       <MapView resolvedTheme={resolved} zones={zones}
-        userPosition={geo.position} flyTo={flyTo ?? (geo.position ? { lat:geo.position.lat, lon:geo.position.lon } : null)} />
+        userPosition={geo.position} flyTo={flyTo} />
 
       <div style={{ position:'absolute', top:12, left:12, right:12, display:'flex', gap:10, alignItems:'flex-start' }}>
         <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} /></div>
