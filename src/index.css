@@ -14,8 +14,11 @@ html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text);
   font-family: -apple-system, system-ui, 'SF Pro', sans-serif; }
 
-/* Popup MapLibre — segue i token tema (default libreria: bianco fisso) */
-.maplibregl-popup-content {
+/* Popup MapLibre — segue i token tema (default libreria: bianco fisso).
+   Prefisso :root per vincere in specificità su maplibre-gl.css, che nel grafo
+   dei moduli viene importato DOPO questo file (MapView) e a parità di
+   specificità riprenderebbe il bianco fisso. */
+:root .maplibregl-popup-content {
   background: var(--surface);
   color: var(--text);
   border-radius: 12px;
@@ -23,19 +26,19 @@ body { background: var(--bg); color: var(--text);
   padding: 10px 14px;
   font-family: inherit;
 }
-.maplibregl-popup-close-button {
+:root .maplibregl-popup-close-button {
   color: var(--text-muted);
   font-size: 16px;
   padding: 2px 6px;
 }
-.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
-.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--surface); }
-.maplibregl-popup-anchor-top .maplibregl-popup-tip,
-.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--surface); }
-.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface); }
-.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface); }
+:root .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+:root .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+:root .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--surface); }
+:root .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+:root .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+:root .maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--surface); }
+:root .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface); }
+:root .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface); }
 
 /* Contenuto popup multi-zona */
 .zone-popup { max-height: 224px; overflow-y: auto; min-width: 200px; }
