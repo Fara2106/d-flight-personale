@@ -17,6 +17,9 @@ it('maps Photon features to results', async () => {
   expect(r[0].label).toContain('Roma');
   const requestedUrl = fetchMock.mock.calls[0][0] as string;
   expect(requestedUrl).toContain('bbox=6.6,35.2,18.8,47.3');
+  // Photon ha rimosso il supporto a lang=it (restano default/de/en/fr):
+  // con lang=it risponde 400 e la ricerca resta muta. Niente parametro lang.
+  expect(requestedUrl).not.toContain('lang=');
 });
 it('returns empty array for blank query', async () => {
   expect(await geocode('  ')).toEqual([]);
