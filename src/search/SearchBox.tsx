@@ -1,8 +1,21 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { geocode, type GeocodeResult } from './geocode';
 export function SearchBox({ onPick }: { onPick: (r: GeocodeResult) => void }) {
   const [q, setQ] = useState(''); const [res, setRes] = useState<GeocodeResult[]>([]);
-  async function run(v: string) { setQ(v); setRes(v.trim().length > 2 ? await geocode(v) : []); }
+  const controllerRef = useRef<AbortController | null>(null);
+  async function run(v: string) {
+    setQ(v);
+    controllerRef.current?.abort();
+    if (v.trim().length <= 2) { controllerRef.current = null; setRes([]); return; }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    try {
+      const r = await geocode(v, controller.signal);
+      if (!controller.signal.aborted) setRes(r);
+    } catch (err) {
+      if ((err as { name?: string }).name !== 'AbortError') throw err;
+    }
+  }
   return (
     <div className="relative">
       <input value={q} onChange={e => run(e.target.value)} placeholder="⌕ Cerca un luogo…"
