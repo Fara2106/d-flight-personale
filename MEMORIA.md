@@ -44,7 +44,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 11 — Chrome UI** (commit `a42dc9f`, review **Approved**; legenda, banner staleness, disclaimer, empty state; wiring in App al Task 14)
   - [x] **Task 12 — Ricerca luoghi (Photon)** (commits `a4f3f66`+`d3a57e2`, review **Approved** dopo fix: bbox Italia, abort richieste stale)
   - [x] **Task 13 — Posizione GPS** (commit `4e93122`, review **Approved**, zero Critical/Important)
-  - [ ] Task 14 — Integrazione App + verifica E2E   ← **PROSSIMO**
+  - [x] **Task 14 — Integrazione App** (commits `eff00e9`+`c22285c`, review **Approved** dopo fix: flyTo stabile via stato esplicito; resta la **verifica manuale E2E** — Step 5 — da fare con l'utente)
+  - [ ] Review finale whole-branch (opus) + fix   ← **PROSSIMO**
 - [ ] Fase 2 — profili + motore regole + pianificazione (piano da scrivere)
 - [ ] Fase 3 — offline / PWA (piano da scrivere)
 
