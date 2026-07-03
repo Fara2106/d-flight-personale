@@ -34,9 +34,11 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[]) {
 }
 
 export function MapView(
-  { resolvedTheme, zones, onZoneClick }:
+  { resolvedTheme, zones, onZoneClick, userPosition, flyTo }:
   { resolvedTheme: 'light' | 'dark'; zones: Zone[];
-    onZoneClick?: (props: Record<string, unknown>) => void }
+    onZoneClick?: (props: Record<string, unknown>) => void;
+    userPosition?: { lat: number; lon: number; accuracy: number } | null;
+    flyTo?: { lat: number; lon: number } | null }
 ) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -79,6 +81,24 @@ export function MapView(
   useEffect(() => {
     const m = map.current; if (m && m.isStyleLoaded()) addZoneLayers(m, zones);
   }, [zones]);
+
+  // vola alla posizione scelta dalla ricerca o dal GPS
+  useEffect(() => {
+    if (flyTo && map.current) map.current.flyTo({ center: [flyTo.lon, flyTo.lat], zoom: 13 });
+  }, [flyTo]);
+
+  // marker "puntino blu" della posizione utente
+  const marker = useRef<maplibregl.Marker | null>(null);
+  useEffect(() => {
+    const m = map.current; if (!m) return;
+    if (!userPosition) { marker.current?.remove(); marker.current = null; return; }
+    const dot = document.createElement('div');
+    dot.style.cssText =
+      'width:16px;height:16px;border-radius:50%;background:#0a84ff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(10,132,255,.2)';
+    marker.current?.remove();
+    marker.current = new maplibregl.Marker({ element: dot })
+      .setLngLat([userPosition.lon, userPosition.lat]).addTo(m);
+  }, [userPosition]);
 
   return <div ref={el} style={{ position: 'absolute', inset: 0 }} />;
 }
