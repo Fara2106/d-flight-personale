@@ -13,3 +13,32 @@
 html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text);
   font-family: -apple-system, system-ui, 'SF Pro', sans-serif; }
+
+/* Popup MapLibre — segue i token tema (default libreria: bianco fisso) */
+.maplibregl-popup-content {
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 10px 14px;
+  font-family: inherit;
+}
+.maplibregl-popup-close-button {
+  color: var(--text-muted);
+  font-size: 16px;
+  padding: 2px 6px;
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--surface); }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--surface); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface); }
+
+/* Contenuto popup multi-zona */
+.zone-popup { max-height: 224px; overflow-y: auto; min-width: 200px; }
+.zone-popup-item { display: flex; gap: 8px; align-items: baseline; padding: 6px 0; }
+.zone-popup-item + .zone-popup-item { border-top: 1px solid rgba(138, 147, 160, 0.25); }
+.zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; align-self: center; }
