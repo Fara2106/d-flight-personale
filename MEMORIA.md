@@ -15,6 +15,10 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **Estetica:** stile "B — Chiaro & essenziale" (mappe iOS); tema **Chiaro/Scuro/Sistema**; accenti blu (`#007aff`/`#0a84ff`); colori zone rosso/arancio/giallo/verde.
 - **GPS:** posizione sulla mappa (puntino blu); resta sul dispositivo.
 - **Stack:** React + TS + Vite, MapLibre (CARTO Positron/Dark Matter, keyless), Tailwind v3, IndexedDB (`idb`), Vitest; geocoder **Photon**.
+- **Hosting (deciso 2026-07-03):** pubblicare su **GitHub Pages** (gratis) a fine Fase 1, così l'app è usabile anche da Safari/iPhone (PWA installabile da "Aggiungi alla schermata Home").
+
+## Idee future (da ragionare insieme, non in Fase 1-3)
+- **Estensione ad altri paesi europei (proposta 2026-07-03, da discutere):** il formato ED-269 è standard UE — ogni paese pubblica le proprie zone UAS sul portale nazionale. Servirebbe: supporto multi-dataset (oggi un import sostituisce il precedente), ricerca luoghi non limitata all'Italia (oggi bbox Italia su Photon), e attenzione alle deroghe nazionali nel motore regole di Fase 2 (tarato su regole italiane).
 
 ## Documenti di riferimento
 - **Specifica:** `docs/superpowers/specs/2026-06-30-dflight-personale-design.md`
@@ -38,7 +42,8 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
   - [x] **Task 9 — Stile mappa + MapView base** (commit `2415c06`, review **Approved**)
   - [x] **Task 10 — Render zone + popup** (commits `da43796`+`b700fe0`, review **Approved**; popup con soffitto formale AGL/AMSL, fix race zones/load)
   - [x] **Task 11 — Chrome UI** (commit `a42dc9f`, review **Approved**; legenda, banner staleness, disclaimer, empty state; wiring in App al Task 14)
-  - [ ] Task 12 — Ricerca luoghi (Photon)   ← **PROSSIMO**
+  - [x] **Task 12 — Ricerca luoghi (Photon)** (commits `a4f3f66`+`d3a57e2`, review **Approved** dopo fix: bbox Italia, abort richieste stale)
+  - [ ] Task 13 — Posizione GPS   ← **PROSSIMO**
   - [ ] Task 13 — Posizione GPS
   - [ ] Task 14 — Integrazione App + verifica E2E
 - [ ] Fase 2 — profili + motore regole + pianificazione (piano da scrivere)
