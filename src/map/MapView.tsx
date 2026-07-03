@@ -3,6 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { mapStyleUrl, ITALY_CENTER, ITALY_ZOOM, ZONE_COLORS } from './mapStyle';
 import { zonesToGeoJSON } from './zonesToGeoJSON';
+import { buildPopupContent } from './popupContent';
 import type { Zone } from '../data/ed269.types';
 
 const SRC = 'zones';
@@ -55,26 +56,13 @@ export function MapView(
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => addZoneLayers(m, zonesRef.current));
     m.on('click', 'zones-fill', (e) => {
-      const f = e.features?.[0]; if (f && onZoneClick) onZoneClick(f.properties || {});
-      if (f) {
-        const p = f.properties ?? {};
-        const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
-        const ceiling = p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—';
-
-        const container = document.createElement('div');
-        const strong = document.createElement('strong');
-        strong.textContent = p.name ?? '';
-        container.appendChild(strong);
-        container.appendChild(document.createElement('br'));
-        container.appendChild(document.createTextNode(p.label ?? '—'));
-        container.appendChild(document.createElement('br'));
-        container.appendChild(document.createTextNode(`Quota max: ${ceiling}`));
-
-        new maplibregl.Popup({ closeButton: true })
-          .setLngLat(e.lngLat)
-          .setDOMContent(container)
-          .addTo(m);
-      }
+      const feats = e.features ?? [];
+      if (feats.length === 0) return;
+      if (onZoneClick) onZoneClick(feats[0].properties || {});
+      new maplibregl.Popup({ closeButton: true })
+        .setLngLat(e.lngLat)
+        .setDOMContent(buildPopupContent(feats.map((f) => f.properties ?? {})))
+        .addTo(m);
     });
     m.on('mouseenter', 'zones-fill', () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', 'zones-fill', () => { m.getCanvas().style.cursor = ''; });
