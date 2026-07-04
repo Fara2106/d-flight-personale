@@ -11,12 +11,15 @@ export function useProfiles() {
   const [pilot, setPilot] = useState<Pilot | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => { (async () => {
-    setDrones(await listDrones());
-    setActiveId(await getActiveDroneId());
-    setPilot(await getPilot());
-    setLoaded(true);
-  })(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [d, a, p] = [await listDrones(), await getActiveDroneId(), await getPilot()];
+      if (cancelled) return;
+      setDrones(d); setActiveId(a); setPilot(p); setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   async function upsertDrone(d: Drone): Promise<void> {
     await saveDrone(d);
