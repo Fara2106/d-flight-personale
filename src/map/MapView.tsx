@@ -1,23 +1,71 @@
 import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { mapStyleUrl, ITALY_CENTER, ITALY_ZOOM, ZONE_COLORS } from './mapStyle';
+import {
+  mapStyleUrl, ITALY_CENTER, ITALY_ZOOM,
+  ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
+} from './mapStyle';
 import { zonesToGeoJSON } from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
 import { circleFeature } from '../verify/verifyLayers';
-import type { Zone } from '../data/ed269.types';
+import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
 
+/** Match data-driven su restrictionType → valore numerico per tipo. */
+function matchByType(
+  values: Record<RestrictionType, number>, fallback: number,
+): maplibregl.ExpressionSpecification {
+  return ['match', ['get', 'restrictionType'],
+    'prohibited', values.prohibited,
+    'auth_required', values.auth_required,
+    'conditional', values.conditional,
+    'none', values.none,
+    fallback];
+}
+
+function zoneColorExpr(): maplibregl.ExpressionSpecification {
+  return ['match', ['get', 'restrictionType'],
+    'prohibited', ZONE_COLORS.prohibited,
+    'auth_required', ZONE_COLORS.auth_required,
+    'conditional', ZONE_COLORS.conditional,
+    'none', ZONE_COLORS.none,
+    '#888888'];
+}
+
+/** Sort key crescente = disegnata sopra: nelle sovrapposizioni domina il colore
+ *  della zona più restrittiva, invece dell'ordine arbitrario del file importato. */
+export function severitySortKey(): maplibregl.ExpressionSpecification {
+  return matchByType({ prohibited: 3, auth_required: 2, conditional: 1, none: 0 }, 0);
+}
+
 export function buildFillPaint(): maplibregl.FillLayerSpecification['paint'] {
   return {
-    'fill-color': ['match', ['get', 'restrictionType'],
-      'prohibited', ZONE_COLORS.prohibited,
-      'auth_required', ZONE_COLORS.auth_required,
-      'conditional', ZONE_COLORS.conditional,
-      'none', ZONE_COLORS.none,
-      '#888888'],
-    'fill-opacity': 0.25,
+    'fill-color': zoneColorExpr(),
+    // opacità per severità: i veli leggeri delle zone innocue non sommano
+    // macchie scure sulle pile di zone sovrapposte
+    'fill-opacity': matchByType(ZONE_FILL_OPACITY, 0.2),
+  };
+}
+
+export function buildFillLayout(): maplibregl.FillLayerSpecification['layout'] {
+  return { 'fill-sort-key': severitySortKey() };
+}
+
+export function buildLinePaint(): maplibregl.LineLayerSpecification['paint'] {
+  return {
+    'line-color': zoneColorExpr(),
+    'line-width': matchByType(ZONE_LINE_WIDTH, 1.2),
+    'line-opacity': 0.9,
+  };
+}
+
+/** Etichette quota: in collisione tra zone impilate vince la più restrittiva. */
+export function buildLabelLayout(): maplibregl.SymbolLayerSpecification['layout'] {
+  return {
+    'text-field': ['get', 'label'], 'text-size': 12,
+    'text-font': ['Open Sans Regular', 'Noto Sans Regular'],
+    'symbol-sort-key': matchByType(RESTRICTION_ORDER, 99),
   };
 }
 
@@ -44,18 +92,21 @@ function setVerifyLayers(map: maplibregl.Map, verify: VerifyState | null) {
 
 function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string | null) {
   const data = zonesToGeoJSON(zones) as any;
-  const fillPaint = buildFillPaint()!;
   if (map.getSource(SRC)) { (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data); return; }
   map.addSource(SRC, { type: 'geojson', data });
-  map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC, paint: fillPaint });
+  map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC,
+    layout: buildFillLayout(), paint: buildFillPaint() });
   map.addLayer({ id: 'zones-line', type: 'line', source: SRC,
-    paint: { 'line-color': fillPaint['fill-color'] as any, 'line-width': 1.2 } });
+    layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() });
+  // velo + bordo blu sulla zona aperta nell'accordion: emerge dalla pila
+  map.addLayer({ id: 'zones-highlight-fill', type: 'fill', source: SRC,
+    filter: highlightFilter(highlightId),
+    paint: { 'fill-color': '#0a84ff', 'fill-opacity': 0.18 } });
   map.addLayer({ id: 'zones-highlight', type: 'line', source: SRC,
     filter: highlightFilter(highlightId),
     paint: { 'line-color': '#0a84ff', 'line-width': 3 } });
   map.addLayer({ id: 'zones-label', type: 'symbol', source: SRC,
-    layout: { 'text-field': ['get', 'label'], 'text-size': 12,
-      'text-font': ['Open Sans Regular', 'Noto Sans Regular'] },
+    layout: buildLabelLayout(),
     paint: { 'text-color': '#1c2530', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4 } });
 }
 
@@ -129,9 +180,10 @@ export function MapView(
   useEffect(() => {
     highlightRef.current = highlightZoneId ?? null;
     const m = map.current;
-    if (m && m.getLayer('zones-highlight')) {
-      m.setFilter('zones-highlight', highlightFilter(highlightZoneId ?? null));
-    }
+    if (!m) return;
+    const f = highlightFilter(highlightZoneId ?? null);
+    if (m.getLayer('zones-highlight')) m.setFilter('zones-highlight', f);
+    if (m.getLayer('zones-highlight-fill')) m.setFilter('zones-highlight-fill', f);
   }, [highlightZoneId]);
 
   // vola alla posizione scelta dalla ricerca o dal GPS
