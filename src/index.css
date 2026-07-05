@@ -48,3 +48,11 @@ body { background: var(--bg); color: var(--text);
   text-align: left; cursor: pointer; }
 .zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .zone-popup-detail { padding: 0 0 8px 18px; color: var(--text-muted); }
+
+/* Scheda verdetto: card a destra su desktop, bottom sheet su mobile */
+.verdict-sheet { position: absolute; right: 12px; top: 64px; width: 360px;
+  max-width: calc(100vw - 24px); max-height: 72vh; overflow-y: auto; z-index: 20; }
+@media (max-width: 640px) {
+  .verdict-sheet { top: auto; right: 0; left: 0; bottom: 0; width: auto;
+    max-height: 55vh; border-radius: 16px 16px 0 0; }
+}
