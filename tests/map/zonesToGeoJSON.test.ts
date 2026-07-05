@@ -11,7 +11,7 @@ const z: Zone = {
   upperLimitM: 0,
   verticalRef: 'AGL',
   message: null,
-  reasons: [],
+  reasons: ['AIR_TRAFFIC'],
   authority: null,
   permanent: true,
 };
@@ -25,4 +25,9 @@ it('produces a FeatureCollection with display properties', () => {
     restrictionType: 'prohibited',
     label: '⛔ 0 m',
   });
+});
+
+it('espone i reasons ED-269 per le spiegazioni in linguaggio semplice', () => {
+  const fc = zonesToGeoJSON([z]);
+  expect(fc.features[0].properties?.reasons).toEqual(['AIR_TRAFFIC']);
 });

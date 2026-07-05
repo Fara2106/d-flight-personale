@@ -61,3 +61,27 @@ it('il dettaglio mostra quota, message e finestra di attività (solo textContent
   expect(detail.textContent).toContain('MON 08:00–20:00');
   expect(el.innerHTML).not.toContain('<script');
 });
+
+it('linguaggio semplice in primo piano: frase concreta, gergo nei "Dettagli tecnici" chiusi', () => {
+  const el = buildPopupContent([zoneA]);
+  const detail = el.querySelector('.zone-popup-detail') as HTMLElement;
+  // la prima cosa che si legge è la frase per principianti, non il gergo
+  const plain = detail.querySelector('.zone-popup-plain') as HTMLElement;
+  expect(plain).not.toBeNull();
+  expect(plain.textContent).toBe('Si può volare, ma con condizioni da rispettare');
+  expect(detail.textContent).toContain('Quota massima qui: 60 m dal suolo');
+  // i dettagli tecnici esistono ma sono in secondo piano (details collassato)
+  const tech = detail.querySelector('details.zone-popup-tech') as HTMLDetailsElement;
+  expect(tech).not.toBeNull();
+  expect(tech.open).toBe(false);
+  expect(tech.querySelector('summary')?.textContent).toBe('Dettagli tecnici');
+  expect(tech.textContent).toContain('60 m AGL');       // quota raw
+  expect(tech.textContent).toContain('conditional');     // tipo ED-269 raw
+  expect(tech.textContent).toContain('Nota A');          // message raw ED-269
+});
+
+it('la zona vietata apre con il divieto in chiaro', () => {
+  const el = buildPopupContent([zoneP]);
+  const plain = el.querySelector('.zone-popup-plain') as HTMLElement;
+  expect(plain.textContent).toBe('Vietato far volare il drone qui');
+});

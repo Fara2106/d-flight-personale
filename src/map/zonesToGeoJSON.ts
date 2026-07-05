@@ -16,6 +16,7 @@ export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
         upperLimitM: z.upperLimitM,
         verticalRef: z.verticalRef,
         message: z.message,
+        reasons: z.reasons,
         applicabilityText: z.applicabilityText ?? null,
       },
     })),

@@ -48,6 +48,10 @@ body { background: var(--bg); color: var(--text);
   text-align: left; cursor: pointer; }
 .zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .zone-popup-detail { padding: 0 0 8px 18px; color: var(--text-muted); }
+.zone-popup-plain { color: var(--text); font-weight: 600; margin: 2px 0 4px; }
+.zone-popup-tech { margin-top: 6px; font-size: 12px; }
+.zone-popup-tech summary { cursor: pointer; color: var(--text-muted); user-select: none; }
+.zone-popup-tech > div { padding-left: 12px; }
 
 /* Barra della modalità verifica */
 .verify-controls { position: absolute; top: 64px; left: 50%;

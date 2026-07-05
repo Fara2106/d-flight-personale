@@ -1,14 +1,14 @@
-import { ZONE_COLORS } from './mapStyle';
+import { ZONE_COLORS, RESTRICTION_ORDER } from './mapStyle';
+import { plainZoneInfo } from './plainLanguage';
 import type { RestrictionType } from '../data/ed269.types';
 
-const ORDER: Record<RestrictionType, number> = {
-  prohibited: 0, auth_required: 1, conditional: 2, none: 3,
-};
 const FALLBACK_COLOR = '#888888';
 
 /** Popup per una o più zone sovrapposte: lista compatta dei nomi ordinati per
  *  restrittività, accordion una-zona-alla-volta; l'apertura notifica onZoneFocus(id)
- *  per l'evidenziazione sulla mappa. Solo textContent (niente HTML raw). */
+ *  per l'evidenziazione sulla mappa. Solo textContent (niente HTML raw).
+ *  Il dettaglio parla il linguaggio dei principianti: frase concreta in evidenza,
+ *  gergo ED-269 relegato in una sezione "Dettagli tecnici" collassata. */
 export function buildPopupContent(
   items: Array<Record<string, unknown>>,
   onZoneFocus?: (id: string | null) => void,
@@ -20,8 +20,8 @@ export function buildPopupContent(
     return true;
   });
   zones.sort((a, b) =>
-    (ORDER[a.restrictionType as RestrictionType] ?? 99) -
-    (ORDER[b.restrictionType as RestrictionType] ?? 99));
+    (RESTRICTION_ORDER[a.restrictionType as RestrictionType] ?? 99) -
+    (RESTRICTION_ORDER[b.restrictionType as RestrictionType] ?? 99));
 
   const root = document.createElement('div');
   root.className = 'zone-popup';
@@ -56,20 +56,37 @@ export function buildPopupContent(
     const detail = document.createElement('div');
     detail.className = 'zone-popup-detail';
     detail.hidden = true;
-    const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
-    const lines = [
-      typeof p.label === 'string' ? p.label : '—',
-      `Quota max: ${p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—'}`,
-    ];
-    if (typeof p.message === 'string' && p.message) lines.push(p.message);
-    if (typeof p.applicabilityText === 'string' && p.applicabilityText) {
-      lines.push(`Attiva: ${p.applicabilityText}`);
-    }
-    for (const t of lines) {
+
+    // 1) linguaggio semplice in primo piano
+    const info = plainZoneInfo(p);
+    const plain = document.createElement('div');
+    plain.className = 'zone-popup-plain';
+    plain.textContent = info.headline;
+    detail.appendChild(plain);
+    for (const t of info.lines) {
       const row = document.createElement('div');
       row.textContent = t;
       detail.appendChild(row);
     }
+
+    // 2) gergo ED-269 in secondo piano, espandibile
+    const tech = document.createElement('details');
+    tech.className = 'zone-popup-tech';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Dettagli tecnici';
+    tech.appendChild(summary);
+    const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
+    const techLines = [
+      `Quota max: ${p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—'}`,
+      `Tipo ED-269: ${typeof p.restrictionType === 'string' ? p.restrictionType : '—'}`,
+    ];
+    if (typeof p.message === 'string' && p.message) techLines.push(p.message);
+    for (const t of techLines) {
+      const row = document.createElement('div');
+      row.textContent = t;
+      tech.appendChild(row);
+    }
+    detail.appendChild(tech);
     details.set(id, detail);
     item.appendChild(detail);
     root.appendChild(item);
