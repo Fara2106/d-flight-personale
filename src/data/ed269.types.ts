@@ -14,6 +14,9 @@ export interface Zone {
   reasons: string[];
   authority: { name?: string; email?: string; phone?: string } | null;
   permanent: boolean;
+  /** Finestra di attività per zone non permanenti (testo compatto); null/assente = permanente.
+   *  Opzionale per compatibilità con record IndexedDB salvati prima della Fase 2. */
+  applicabilityText?: string | null;
 }
 
 export interface DatasetMeta {

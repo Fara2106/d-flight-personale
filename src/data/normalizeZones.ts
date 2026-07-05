@@ -26,6 +26,25 @@ function geometryOf(vol: Ed269Volume | undefined, uom?: string): Polygon | Multi
   return null;
 }
 
+function dateOf(iso: unknown): string | null {
+  return typeof iso === 'string' && iso.length >= 10 ? iso.slice(0, 10) : null;
+}
+
+function applicabilityTextOf(applic: any, permanent: boolean): string | null {
+  if (permanent) return null;
+  const parts: string[] = [];
+  const from = dateOf(applic?.startDateTime), to = dateOf(applic?.endDateTime);
+  if (from || to) parts.push([from, to].filter(Boolean).join(' → '));
+  const sched = Array.isArray(applic?.schedule) ? applic.schedule : [];
+  for (const s of sched) {
+    const days = Array.isArray(s?.day) ? s.day.join(', ') : '';
+    const hours = s?.startTime && s?.endTime ? `${s.startTime}–${s.endTime}` : '';
+    const t = [days, hours].filter(Boolean).join(' ');
+    if (t) parts.push(t);
+  }
+  return parts.length ? parts.join(' · ') : 'a orari/finestre — verifica su D-Flight';
+}
+
 function authorityOf(f: Ed269Feature) {
   const a = Array.isArray(f.zoneAuthority) ? f.zoneAuthority[0] : f.zoneAuthority;
   if (!a) return null;
@@ -39,6 +58,7 @@ export function normalizeZones(doc: Ed269Document): Zone[] {
     const geometry = geometryOf(vol, vol?.uomDimensions);
     if (!geometry) return; // scarta feature senza geometria utilizzabile
     const applic = Array.isArray(f.applicability) ? f.applicability[0] : undefined;
+    const permanent = applic?.permanent === 'YES' || applic?.permanent === true || !applic;
     zones.push({
       id: f.identifier || `zone-${i}`,
       name: f.name || 'Zona senza nome',
@@ -50,7 +70,8 @@ export function normalizeZones(doc: Ed269Document): Zone[] {
       message: f.message ?? null,
       reasons: Array.isArray(f.reason) ? f.reason : [],
       authority: authorityOf(f),
-      permanent: applic?.permanent === 'YES' || applic?.permanent === true || !applic,
+      permanent,
+      applicabilityText: applicabilityTextOf(applic, permanent),
     });
   });
   return zones;

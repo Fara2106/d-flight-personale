@@ -34,3 +34,30 @@ it('converts a Circle projection to a Polygon', () => {
   expect(z.geometry.type).toBe('Polygon');
   expect(z.geometry.coordinates[0].length).toBeGreaterThan(10);
 });
+
+it('zona permanente → applicabilityText null', () => {
+  const doc = { features: [{ identifier: 'p1', name: 'P', restriction: 'PROHIBITED',
+    geometry: [{ horizontalProjection: { type: 'Polygon', coordinates: [[[0,0],[1,0],[1,1],[0,0]]] } }],
+    applicability: [{ permanent: 'YES' }] }] } as any;
+  expect(normalizeZones(doc)[0].applicabilityText).toBeNull();
+});
+
+it('zona a finestra → testo con date e schedule', () => {
+  const doc = { features: [{ identifier: 's1', name: 'S', restriction: 'CONDITIONAL',
+    geometry: [{ horizontalProjection: { type: 'Polygon', coordinates: [[[0,0],[1,0],[1,1],[0,0]]] } }],
+    applicability: [{ permanent: 'NO',
+      startDateTime: '2026-07-01T00:00:00Z', endDateTime: '2026-09-30T23:59:00Z',
+      schedule: [{ day: ['MON', 'FRI'], startTime: '08:00', endTime: '20:00' }] }] }] } as any;
+  const t = normalizeZones(doc)[0].applicabilityText;
+  expect(t).toContain('2026-07-01');
+  expect(t).toContain('2026-09-30');
+  expect(t).toContain('MON, FRI');
+  expect(t).toContain('08:00–20:00');
+});
+
+it('zona non permanente senza dettagli → testo generico', () => {
+  const doc = { features: [{ identifier: 's2', name: 'S2', restriction: 'CONDITIONAL',
+    geometry: [{ horizontalProjection: { type: 'Polygon', coordinates: [[[0,0],[1,0],[1,1],[0,0]]] } }],
+    applicability: [{ permanent: 'NO' }] }] } as any;
+  expect(normalizeZones(doc)[0].applicabilityText).toMatch(/orari|finestre/i);
+});
