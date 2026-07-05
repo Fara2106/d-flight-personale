@@ -40,8 +40,11 @@ body { background: var(--bg); color: var(--text);
 :root .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface); }
 :root .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface); }
 
-/* Contenuto popup multi-zona */
-.zone-popup { max-height: 224px; overflow-y: auto; min-width: 200px; }
-.zone-popup-item { display: flex; gap: 8px; align-items: baseline; padding: 6px 0; }
+/* Contenuto popup multi-zona (accordion) */
+.zone-popup { max-height: 240px; overflow-y: auto; min-width: 200px; }
 .zone-popup-item + .zone-popup-item { border-top: 1px solid rgba(138, 147, 160, 0.25); }
-.zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; align-self: center; }
+.zone-popup-head { display: flex; gap: 8px; align-items: center; width: 100%;
+  padding: 6px 0; background: none; border: 0; color: inherit; font: inherit;
+  text-align: left; cursor: pointer; }
+.zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.zone-popup-detail { padding: 0 0 8px 18px; color: var(--text-muted); }

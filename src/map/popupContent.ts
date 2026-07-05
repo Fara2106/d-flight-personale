@@ -6,9 +6,13 @@ const ORDER: Record<RestrictionType, number> = {
 };
 const FALLBACK_COLOR = '#888888';
 
-/** Contenuto popup per una o più zone sovrapposte: dedup per id,
- *  ordinate dalla più restrittiva; solo textContent (niente HTML raw). */
-export function buildPopupContent(items: Array<Record<string, unknown>>): HTMLElement {
+/** Popup per una o più zone sovrapposte: lista compatta dei nomi ordinati per
+ *  restrittività, accordion una-zona-alla-volta; l'apertura notifica onZoneFocus(id)
+ *  per l'evidenziazione sulla mappa. Solo textContent (niente HTML raw). */
+export function buildPopupContent(
+  items: Array<Record<string, unknown>>,
+  onZoneFocus?: (id: string | null) => void,
+): HTMLElement {
   const seen = new Set<unknown>();
   const zones = items.filter((p) => {
     if (seen.has(p.id)) return false;
@@ -21,30 +25,56 @@ export function buildPopupContent(items: Array<Record<string, unknown>>): HTMLEl
 
   const root = document.createElement('div');
   root.className = 'zone-popup';
+  let openId: string | null = null;
+  const details = new Map<string, HTMLElement>();
+
+  const setOpen = (id: string | null) => {
+    openId = id;
+    for (const [zid, el] of details) el.hidden = zid !== id;
+    onZoneFocus?.(id);
+  };
+
   for (const p of zones) {
+    const id = String(p.id ?? '');
     const item = document.createElement('div');
     item.className = 'zone-popup-item';
 
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'zone-popup-head';
     const dot = document.createElement('span');
     dot.className = 'zone-popup-dot';
     dot.style.backgroundColor =
       ZONE_COLORS[p.restrictionType as RestrictionType] ?? FALLBACK_COLOR;
-    item.appendChild(dot);
+    head.appendChild(dot);
+    const name = document.createElement('strong');
+    name.textContent = typeof p.name === 'string' ? p.name : '';
+    head.appendChild(name);
+    head.addEventListener('click', () => setOpen(openId === id ? null : id));
+    item.appendChild(head);
 
-    const body = document.createElement('div');
-    const strong = document.createElement('strong');
-    strong.textContent = typeof p.name === 'string' ? p.name : '';
-    body.appendChild(strong);
-    body.appendChild(document.createElement('br'));
-    body.appendChild(document.createTextNode(
-      typeof p.label === 'string' ? p.label : '—'));
-    body.appendChild(document.createElement('br'));
+    const detail = document.createElement('div');
+    detail.className = 'zone-popup-detail';
+    detail.hidden = true;
     const ref = p.verticalRef ? ` ${p.verticalRef}` : '';
-    const ceiling = p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—';
-    body.appendChild(document.createTextNode(`Quota max: ${ceiling}`));
-    item.appendChild(body);
-
+    const lines = [
+      typeof p.label === 'string' ? p.label : '—',
+      `Quota max: ${p.upperLimitM != null ? `${p.upperLimitM} m${ref}` : '—'}`,
+    ];
+    if (typeof p.message === 'string' && p.message) lines.push(p.message);
+    if (typeof p.applicabilityText === 'string' && p.applicabilityText) {
+      lines.push(`Attiva: ${p.applicabilityText}`);
+    }
+    for (const t of lines) {
+      const row = document.createElement('div');
+      row.textContent = t;
+      detail.appendChild(row);
+    }
+    details.set(id, detail);
+    item.appendChild(detail);
     root.appendChild(item);
   }
+
+  if (zones.length === 1) setOpen(String(zones[0].id ?? ''));
   return root;
 }

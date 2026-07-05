@@ -20,7 +20,11 @@ export function buildFillPaint(): maplibregl.FillLayerSpecification['paint'] {
   };
 }
 
-function addZoneLayers(map: maplibregl.Map, zones: Zone[]) {
+export function highlightFilter(id: string | null): maplibregl.FilterSpecification {
+  return ['==', ['get', 'id'], id ?? '__none__'] as maplibregl.FilterSpecification;
+}
+
+function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string | null) {
   const data = zonesToGeoJSON(zones) as any;
   const fillPaint = buildFillPaint()!;
   if (map.getSource(SRC)) { (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data); return; }
@@ -28,6 +32,9 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[]) {
   map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC, paint: fillPaint });
   map.addLayer({ id: 'zones-line', type: 'line', source: SRC,
     paint: { 'line-color': fillPaint['fill-color'] as any, 'line-width': 1.2 } });
+  map.addLayer({ id: 'zones-highlight', type: 'line', source: SRC,
+    filter: highlightFilter(highlightId),
+    paint: { 'line-color': '#0a84ff', 'line-width': 3 } });
   map.addLayer({ id: 'zones-label', type: 'symbol', source: SRC,
     layout: { 'text-field': ['get', 'label'], 'text-size': 12,
       'text-font': ['Open Sans Regular', 'Noto Sans Regular'] },
@@ -35,16 +42,21 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[]) {
 }
 
 export function MapView(
-  { resolvedTheme, zones, onZoneClick, userPosition, flyTo }:
+  { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneId, onZoneFocus }:
   { resolvedTheme: 'light' | 'dark'; zones: Zone[];
     onZoneClick?: (props: Record<string, unknown>) => void;
     userPosition?: { lat: number; lon: number; accuracy: number } | null;
-    flyTo?: { lat: number; lon: number } | null }
+    flyTo?: { lat: number; lon: number } | null;
+    highlightZoneId?: string | null;
+    onZoneFocus?: (id: string | null) => void }
 ) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const zonesRef = useRef<Zone[]>(zones);
   zonesRef.current = zones;
+  const highlightRef = useRef<string | null>(highlightZoneId ?? null);
+  const onZoneFocusRef = useRef(onZoneFocus);
+  onZoneFocusRef.current = onZoneFocus;
 
   useEffect(() => {
     if (!el.current || map.current) return;
@@ -54,15 +66,18 @@ export function MapView(
     });
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    m.on('load', () => addZoneLayers(m, zonesRef.current));
+    m.on('load', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
     m.on('click', 'zones-fill', (e) => {
       const feats = e.features ?? [];
       if (feats.length === 0) return;
       if (onZoneClick) onZoneClick(feats[0].properties || {});
-      new maplibregl.Popup({ closeButton: true })
+      const popup = new maplibregl.Popup({ closeButton: true })
         .setLngLat(e.lngLat)
-        .setDOMContent(buildPopupContent(feats.map((f) => f.properties ?? {})))
+        .setDOMContent(buildPopupContent(
+          feats.map((f) => f.properties ?? {}),
+          (id) => onZoneFocusRef.current?.(id)))
         .addTo(m);
+      popup.on('close', () => onZoneFocusRef.current?.(null));
     });
     m.on('mouseenter', 'zones-fill', () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', 'zones-fill', () => { m.getCanvas().style.cursor = ''; });
@@ -73,12 +88,20 @@ export function MapView(
   useEffect(() => {
     const m = map.current; if (!m) return;
     m.setStyle(mapStyleUrl(resolvedTheme));
-    m.once('styledata', () => addZoneLayers(m, zones));
+    m.once('styledata', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
   }, [resolvedTheme]);
 
   useEffect(() => {
-    const m = map.current; if (m && m.isStyleLoaded()) addZoneLayers(m, zones);
+    const m = map.current; if (m && m.isStyleLoaded()) addZoneLayers(m, zones, highlightRef.current);
   }, [zones]);
+
+  useEffect(() => {
+    highlightRef.current = highlightZoneId ?? null;
+    const m = map.current;
+    if (m && m.getLayer('zones-highlight')) {
+      m.setFilter('zones-highlight', highlightFilter(highlightZoneId ?? null));
+    }
+  }, [highlightZoneId]);
 
   // vola alla posizione scelta dalla ricerca o dal GPS
   useEffect(() => {

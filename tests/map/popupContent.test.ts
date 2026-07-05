@@ -1,48 +1,63 @@
-import { it, expect } from 'vitest';
+// tests/map/popupContent.test.ts
+import { it, expect, vi } from 'vitest';
 import { buildPopupContent } from '../../src/map/popupContent';
 
-const zone = (over: Record<string, unknown> = {}) => ({
-  id: 'z1', name: 'CTR Roma', restrictionType: 'auth_required',
-  label: '⚠️ 45 m', upperLimitM: 45, verticalRef: 'AGL', ...over,
+const zoneA = { id: 'a', name: 'Alfa', restrictionType: 'conditional',
+  label: '≤ 60 m', upperLimitM: 60, verticalRef: 'AGL', message: 'Nota A', applicabilityText: null };
+const zoneP = { id: 'p', name: 'Papa', restrictionType: 'prohibited',
+  label: '⛔ 0 m', upperLimitM: 0, verticalRef: 'AGL', message: null, applicabilityText: 'MON 08:00–20:00' };
+
+it('dedup per id e ordinamento per restrittività (prohibited primo)', () => {
+  const el = buildPopupContent([zoneA, zoneP, zoneA]);
+  const names = [...el.querySelectorAll('.zone-popup-head strong')].map(n => n.textContent);
+  expect(names).toEqual(['Papa', 'Alfa']);
 });
 
-it('rende nome, etichetta e quota max di una zona', () => {
-  const el = buildPopupContent([zone()]);
-  expect(el.className).toBe('zone-popup');
-  const items = el.querySelectorAll('.zone-popup-item');
-  expect(items).toHaveLength(1);
-  expect(items[0].textContent).toContain('CTR Roma');
-  expect(items[0].textContent).toContain('⚠️ 45 m');
-  expect(items[0].textContent).toContain('Quota max: 45 m AGL');
+it('multi-zona: dettagli chiusi in partenza', () => {
+  const el = buildPopupContent([zoneA, zoneP]);
+  const details = [...el.querySelectorAll('.zone-popup-detail')] as HTMLElement[];
+  expect(details).toHaveLength(2);
+  expect(details.every(d => d.hidden)).toBe(true);
 });
 
-it('mostra — quando la quota max è assente', () => {
-  const el = buildPopupContent([zone({ upperLimitM: null, verticalRef: null })]);
-  expect(el.textContent).toContain('Quota max: —');
+it('click su un nome apre solo quel dettaglio e notifica il focus', () => {
+  const focus = vi.fn();
+  const el = buildPopupContent([zoneA, zoneP], focus);
+  const heads = [...el.querySelectorAll('.zone-popup-head')] as HTMLElement[];
+  heads[1].click(); // Alfa
+  const details = [...el.querySelectorAll('.zone-popup-detail')] as HTMLElement[];
+  expect(details[1].hidden).toBe(false);
+  expect(details[0].hidden).toBe(true);
+  expect(focus).toHaveBeenLastCalledWith('a');
+  heads[0].click(); // Papa: chiude Alfa
+  expect(details[0].hidden).toBe(false);
+  expect(details[1].hidden).toBe(true);
+  expect(focus).toHaveBeenLastCalledWith('p');
 });
 
-it('deduplica le zone con lo stesso id', () => {
-  const el = buildPopupContent([zone(), zone(), zone({ id: 'z2', name: 'P-Zona' })]);
-  expect(el.querySelectorAll('.zone-popup-item')).toHaveLength(2);
+it('ri-click sulla zona aperta la chiude e azzera il focus', () => {
+  const focus = vi.fn();
+  const el = buildPopupContent([zoneA, zoneP], focus);
+  const head = el.querySelector('.zone-popup-head') as HTMLElement;
+  head.click();
+  head.click();
+  expect(focus).toHaveBeenLastCalledWith(null);
+  const detail = el.querySelector('.zone-popup-detail') as HTMLElement;
+  expect(detail.hidden).toBe(true);
 });
 
-it('ordina per restrittività: prohibited prima, none in fondo, sconosciute in coda', () => {
-  const el = buildPopupContent([
-    zone({ id: 'a', name: 'Verde', restrictionType: 'none' }),
-    zone({ id: 'b', name: 'Ignota', restrictionType: 'boh' }),
-    zone({ id: 'c', name: 'Rossa', restrictionType: 'prohibited' }),
-    zone({ id: 'd', name: 'Gialla', restrictionType: 'conditional' }),
-  ]);
-  const names = [...el.querySelectorAll('.zone-popup-item strong')].map((n) => n.textContent);
-  expect(names).toEqual(['Rossa', 'Gialla', 'Verde', 'Ignota']);
+it('singola zona: parte aperta e con focus', () => {
+  const focus = vi.fn();
+  const el = buildPopupContent([zoneA], focus);
+  const detail = el.querySelector('.zone-popup-detail') as HTMLElement;
+  expect(detail.hidden).toBe(false);
+  expect(focus).toHaveBeenLastCalledWith('a');
 });
 
-it('colora il pallino secondo il tipo di restrizione, grigio se sconosciuto', () => {
-  const el = buildPopupContent([
-    zone({ id: 'a', restrictionType: 'prohibited' }),
-    zone({ id: 'b', restrictionType: 'boh' }),
-  ]);
-  const dots = [...el.querySelectorAll('.zone-popup-dot')] as HTMLElement[];
-  expect(dots[0].style.backgroundColor).toBe('rgb(239, 68, 68)'); // #ef4444
-  expect(dots[1].style.backgroundColor).toBe('rgb(136, 136, 136)'); // #888888
+it('il dettaglio mostra quota, message e finestra di attività (solo textContent)', () => {
+  const el = buildPopupContent([zoneP]);
+  const detail = el.querySelector('.zone-popup-detail') as HTMLElement;
+  expect(detail.textContent).toContain('0 m AGL');
+  expect(detail.textContent).toContain('MON 08:00–20:00');
+  expect(el.innerHTML).not.toContain('<script');
 });
