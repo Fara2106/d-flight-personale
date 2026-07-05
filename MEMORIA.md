@@ -1,7 +1,7 @@
 # MEMORIA — D-Flight personale
 
 > Diario di progetto + **documento di handoff** per continuare in una nuova chat.
-> Ultimo aggiornamento: 2026-07-05 notte (**6 commit locali NON pushati**: zone sovrapposte, popup semplice, code-splitting, docs Fase 3, tracking posizione in tempo reale; `avvio.command` irrobustito; falso allarme "pagina bianca" chiarito: era l'URL senza base).
+> Ultimo aggiornamento: 2026-07-05 notte — fine sessione Cowork. **7 commit locali su `main`, NON pushati** (2 feature UX mappa, code-splitting, tracking posizione, docs Fase 3, 2× MEMORIA). `avvio.command` irrobustito (untracked); falso allarme "pagina bianca" chiarito (URL senza base). **Prossimo passo: verifica visiva di Lorenzo → push suo.**
 
 ## Cos'è
 Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche UAS italiane** (dati ufficiali D-Flight, formato ED-269) con UI moderna, e pianificare voli con verdetto personalizzato. Non sostituisce la verifica ufficiale su D-Flight.
@@ -18,7 +18,13 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **Hosting (deciso 2026-07-03):** pubblicare su **GitHub Pages** (gratis) a fine Fase 1, così l'app è usabile anche da Safari/iPhone (PWA installabile da "Aggiungi alla schermata Home").
 
 ## TODO prossima sessione
-- **⚠️ PRIMA DI TUTTO — lavoro locale NON pushato (2026-07-05 sera, sessione Cowork):** su `main` ci sono commit locali in attesa: `0fcd0a1` (zone sovrapposte leggibili), `5cfe5d0` (popup linguaggio semplice), `2e9b172` (code-splitting MapLibre) + docs. **Lorenzo deve verificare visivamente** (doppio click su `avvio.command`, import ED-269, controllare zone impilate e popup in chiaro/scuro) e **decidere lui il push** (il push triggera il deploy Pages). NON pushare senza suo ok. Gli E2E Playwright (`node e2e/run.mjs`) sono da rigirare sul Mac dopo la verifica visiva (nel sandbox della sessione non erano eseguibili).
+- **⚠️ PRIMA DI TUTTO — 7 commit locali NON pushati (2026-07-05, sessione Cowork):** `0fcd0a1` zone sovrapposte leggibili · `5cfe5d0` popup linguaggio semplice · `2e9b172` code-splitting MapLibre · `2501c90` bozza docs Fase 3 · `347d589` tracking posizione in tempo reale · `120141c`+`79958f7` MEMORIA. **Checklist di verifica per Lorenzo (poi push suo — triggera il deploy Pages):**
+  1. doppio click su `avvio.command` (ora robusto: apre da solo l'URL giusto con base `/d-flight-personale/`);
+  2. import ED-269 → zone impilate leggibili (rosso domina le intersezioni, bordi netti) + popup: frase semplice in evidenza, "Dettagli tecnici" collassato — in ENTRAMBI i temi;
+  3. bottone 📍 = toggle tracking: puntino che segue, freccia direzione in movimento (mobile), permesso negato → messaggio chiaro; "Usa la mia posizione" nella Verifica usa la posizione live;
+  4. E2E sul Mac: `node e2e/run.mjs` (nel sandbox non eseguibili — manca il browser);
+  5. pulizia una tantum: `rm -f .git/*.bak` (lock stantii innocui della sessione sandbox);
+  6. se tutto ok → `git push` (se la run Pages fallisce: `gh run rerun <id> --failed`).
 - **Fase 3 (offline/PWA): BOZZA spec + piano scritte (2026-07-05), DA REVISIONARE con Lorenzo** — `docs/superpowers/specs/2026-07-05-dflight-fase3-offline-pwa.md` e `docs/superpowers/plans/2026-07-05-dflight-fase3-offline-pwa.md`. Sciogliere le decisioni aperte A–D della spec (cache tile CARTO, vite-plugin-pwa vs SW manuale, bottone installa, icone), poi completare il piano col codice per task e partire.
 - **In sospeso:** `avvio.command` (chiesto da Lorenzo, tenuto) e `.claude/` restano **untracked** — decidere se committare lo script (il repo è pubblico) o tenerlo solo locale.
 - **Pulizia una tantum (Mac):** cestinare i lock stantii lasciati dalla sessione sandbox: `rm -f .git/*.bak` (file `stale-*.lock.bak` / `*.lock.*.bak`, innocui); eventuali `tmp_obj_*` orfani in `.git/objects/` li pulisce `git gc`.
