@@ -8,6 +8,7 @@ import {
 import { zonesToGeoJSON } from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
 import { circleFeature } from '../verify/verifyLayers';
+import type { GeoPosition } from '../location/useGeolocation';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
@@ -114,7 +115,7 @@ export function MapView(
   { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneId, onZoneFocus, verify, onVerifyPick }:
   { resolvedTheme: 'light' | 'dark'; zones: Zone[];
     onZoneClick?: (props: Record<string, unknown>) => void;
-    userPosition?: { lat: number; lon: number; accuracy: number } | null;
+    userPosition?: GeoPosition | null;
     flyTo?: { lat: number; lon: number } | null;
     highlightZoneId?: string | null;
     onZoneFocus?: (id: string | null) => void;
@@ -191,17 +192,30 @@ export function MapView(
     if (flyTo && map.current) map.current.flyTo({ center: [flyTo.lon, flyTo.lat], zoom: 13 });
   }, [flyTo]);
 
-  // marker "puntino blu" della posizione utente
+  // marker "puntino blu" della posizione utente (aggiornato in place a ogni fix
+  // del tracking; freccia direzione quando l'heading è disponibile)
   const marker = useRef<maplibregl.Marker | null>(null);
   useEffect(() => {
     const m = map.current; if (!m) return;
     if (!userPosition) { marker.current?.remove(); marker.current = null; return; }
-    const dot = document.createElement('div');
-    dot.style.cssText =
-      'width:16px;height:16px;border-radius:50%;background:#0a84ff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(10,132,255,.2)';
-    marker.current?.remove();
-    marker.current = new maplibregl.Marker({ element: dot })
-      .setLngLat([userPosition.lon, userPosition.lat]).addTo(m);
+    if (!marker.current) {
+      const dot = document.createElement('div');
+      dot.className = 'user-dot';
+      const arrow = document.createElement('div');
+      arrow.className = 'user-dot-heading';
+      dot.appendChild(arrow);
+      marker.current = new maplibregl.Marker({ element: dot })
+        .setLngLat([userPosition.lon, userPosition.lat]).addTo(m);
+    } else {
+      marker.current.setLngLat([userPosition.lon, userPosition.lat]);
+    }
+    const arrow = marker.current.getElement()
+      .querySelector('.user-dot-heading') as HTMLElement | null;
+    if (arrow) {
+      const h = userPosition.heading;
+      arrow.style.display = h != null ? 'block' : 'none';
+      if (h != null) arrow.style.transform = `rotate(${h}deg)`;
+    }
   }, [userPosition]);
 
   // cerchio di verifica + centro trascinabile

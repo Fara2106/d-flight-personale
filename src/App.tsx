@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from './theme/useTheme';
 import { ThemeToggle } from './theme/ThemeToggle';
 import { MapView } from './map/MapView';
@@ -39,9 +39,16 @@ export default function App() {
     setZones(await loadZones()); setMeta(await loadMeta());
   })(); }, []);
 
+  // centra la mappa SOLO alla prima fix del tracking (i fix successivi muovono
+  // il puntino, non la camera: l'utente resta libero di esplorare la mappa)
+  const centeredOnFix = useRef(false);
   useEffect(() => {
-    if (geo.position) setFlyTo({ lat: geo.position.lat, lon: geo.position.lon });
-  }, [geo.position]);
+    if (!geo.watching) { centeredOnFix.current = false; return; }
+    if (geo.position && !centeredOnFix.current) {
+      centeredOnFix.current = true;
+      setFlyTo({ lat: geo.position.lat, lon: geo.position.lon });
+    }
+  }, [geo.watching, geo.position]);
 
   async function refresh() { setZones(await loadZones()); setMeta(await loadMeta()); setErr(null); }
 
@@ -89,7 +96,8 @@ export default function App() {
           style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)' }}>
           Profilo
         </button>
-        <LocateButton onClick={geo.request} />
+        <LocateButton active={geo.watching}
+          onClick={() => { if (geo.watching) geo.stop(); else geo.start(); }} />
         <ImportButton onDone={async () => { await refresh(); }} onError={setErr} />
       </div>
 
