@@ -1,0 +1,42 @@
+{
+  "features": [
+    {
+      "identifier": "Z1",
+      "name": "Area condizionata grande",
+      "restriction": "CONDITIONAL",
+      "message": "Volo consentito sotto i 60 m previa valutazione.",
+      "geometry": [{
+        "horizontalProjection": { "type": "Polygon", "coordinates": [[
+          [12.496, 41.996], [12.504, 41.996], [12.504, 42.004], [12.496, 42.004], [12.496, 41.996]
+        ]] },
+        "lowerLimit": 0, "upperLimit": 60,
+        "upperVerticalReference": "AGL", "uomDimensions": "M"
+      }]
+    },
+    {
+      "identifier": "Z2",
+      "name": "Area condizionata piccola",
+      "restriction": "CONDITIONAL",
+      "message": "Contattare il gestore locale.",
+      "geometry": [{
+        "horizontalProjection": { "type": "Polygon", "coordinates": [[
+          [12.498, 41.998], [12.502, 41.998], [12.502, 42.002], [12.498, 42.002], [12.498, 41.998]
+        ]] },
+        "lowerLimit": 0, "upperLimit": 45,
+        "upperVerticalReference": "AGL", "uomDimensions": "M"
+      }]
+    },
+    {
+      "identifier": "Z3",
+      "name": "Zona vietata a est",
+      "restriction": "PROHIBITED",
+      "geometry": [{
+        "horizontalProjection": { "type": "Polygon", "coordinates": [[
+          [12.5045, 41.998], [12.5075, 41.998], [12.5075, 42.002], [12.5045, 42.002], [12.5045, 41.998]
+        ]] },
+        "lowerLimit": 0, "upperLimit": 0,
+        "upperVerticalReference": "AGL", "uomDimensions": "M"
+      }]
+    }
+  ]
+}
