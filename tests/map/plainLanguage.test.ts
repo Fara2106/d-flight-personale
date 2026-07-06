@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { plainZoneInfo, parseReasons } from '../../src/map/plainLanguage';
+import { plainZoneInfo, parseReasons, plainGroupedZoneInfo } from '../../src/map/plainLanguage';
 
 describe('plainZoneInfo: frasi semplici per principianti dai campi ED-269', () => {
   it('headline concreta per ogni tipo di restrizione', () => {
@@ -69,5 +69,52 @@ describe('parseReasons', () => {
     expect(parseReasons('non-json [')).toEqual([]);
     expect(parseReasons(undefined)).toEqual([]);
     expect(parseReasons(42)).toEqual([]);
+  });
+});
+
+describe('plainGroupedZoneInfo: raggruppamento per nome', () => {
+  it('zone con nome diverso → una voce ciascuna', () => {
+    const items = [
+      { name: 'Alpha', restrictionType: 'conditional', upperLimitM: 60, verticalRef: 'AGL' },
+      { name: 'Beta', restrictionType: 'prohibited', upperLimitM: 0, verticalRef: 'AGL' },
+    ];
+    const result = plainGroupedZoneInfo(items);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.headline).toBe('Vietato far volare il drone qui');
+    expect(result[0]!.name).toBe('Beta');
+    expect(result[1]!.headline).toBe('Si può volare, ma con condizioni da rispettare');
+  });
+
+  it('zone con nome identico → una voce con fasce multiple', () => {
+    const items = [
+      { name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 0, verticalRef: 'AGL' },
+      { name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 30, verticalRef: 'AGL' },
+    ];
+    const result = plainGroupedZoneInfo(items);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.name).toBe('Linate');
+    expect(result[0]!.bands).toHaveLength(2);
+    expect(result[0]!.bands[0]!.lowerM).toBe(0);
+    expect(result[0]!.bands[1]!.lowerM).toBe(30);
+  });
+
+  it('la fascia principale è la più restrittiva', () => {
+    const items = [
+      { name: 'X', restrictionType: 'conditional', upperLimitM: 100, lowerLimitM: 0, verticalRef: 'AGL' },
+      { name: 'X', restrictionType: 'auth_required', upperLimitM: 100, lowerLimitM: 0, verticalRef: 'AGL' },
+    ];
+    const result = plainGroupedZoneInfo(items);
+    expect(result[0]!.mainRestrictionType).toBe('auth_required');
+    expect(result[0]!.headline).toBe("Serve un'autorizzazione per volare qui");
+  });
+
+  it('nomi senza nome → raggruppati sotto "(senza nome)"', () => {
+    const items = [
+      { restrictionType: 'conditional', upperLimitM: 50, verticalRef: 'AGL' },
+      { restrictionType: 'conditional', upperLimitM: 50, verticalRef: 'AGL' },
+    ];
+    const result = plainGroupedZoneInfo(items);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.headline).toBe('Si può volare, ma con condizioni da rispettare');
   });
 });

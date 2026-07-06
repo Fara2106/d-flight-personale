@@ -70,8 +70,8 @@ export function buildLabelLayout(): maplibregl.SymbolLayerSpecification['layout'
   };
 }
 
-export function highlightFilter(id: string | null): maplibregl.FilterSpecification {
-  return ['==', ['get', 'id'], id ?? '__none__'] as maplibregl.FilterSpecification;
+export function highlightFilter(name: string | null): maplibregl.FilterSpecification {
+  return ['==', ['get', 'name'], name ?? '__none__'] as maplibregl.FilterSpecification;
 }
 
 export interface VerifyState { point: { lat: number; lon: number } | null; radiusM: number }
@@ -112,13 +112,13 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
 }
 
 export function MapView(
-  { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneId, onZoneFocus, verify, onVerifyPick }:
+  { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneName, onZoneFocus, verify, onVerifyPick }:
   { resolvedTheme: 'light' | 'dark'; zones: Zone[];
     onZoneClick?: (props: Record<string, unknown>) => void;
     userPosition?: GeoPosition | null;
     flyTo?: { lat: number; lon: number } | null;
-    highlightZoneId?: string | null;
-    onZoneFocus?: (id: string | null) => void;
+    highlightZoneName?: string | null;
+    onZoneFocus?: (name: string | null) => void;
     verify?: VerifyState | null;
     onVerifyPick?: (lat: number, lon: number) => void }
 ) {
@@ -126,7 +126,7 @@ export function MapView(
   const map = useRef<maplibregl.Map | null>(null);
   const zonesRef = useRef<Zone[]>(zones);
   zonesRef.current = zones;
-  const highlightRef = useRef<string | null>(highlightZoneId ?? null);
+  const highlightRef = useRef<string | null>(highlightZoneName ?? null);
   const onZoneFocusRef = useRef(onZoneFocus);
   onZoneFocusRef.current = onZoneFocus;
   const verifyRef = useRef<VerifyState | null>(verify ?? null);
@@ -179,13 +179,13 @@ export function MapView(
   }, [zones]);
 
   useEffect(() => {
-    highlightRef.current = highlightZoneId ?? null;
+    highlightRef.current = highlightZoneName ?? null;
     const m = map.current;
     if (!m) return;
-    const f = highlightFilter(highlightZoneId ?? null);
+    const f = highlightFilter(highlightZoneName ?? null);
     if (m.getLayer('zones-highlight')) m.setFilter('zones-highlight', f);
     if (m.getLayer('zones-highlight-fill')) m.setFilter('zones-highlight-fill', f);
-  }, [highlightZoneId]);
+  }, [highlightZoneName]);
 
   // vola alla posizione scelta dalla ricerca o dal GPS
   useEffect(() => {

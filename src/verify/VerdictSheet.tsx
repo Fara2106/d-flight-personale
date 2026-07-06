@@ -28,8 +28,8 @@ export function VerdictSheet(
   focusRef.current = onZoneFocus;
   useEffect(() => () => focusRef.current(null), []);
 
-  function toggleZone(id: string) {
-    const next = openZoneId === id ? null : id;
+  function toggleZone(name: string) {
+    const next = openZoneId === name ? null : name;
     setOpenZoneId(next);
     onZoneFocus(next);
   }
@@ -92,7 +92,7 @@ export function VerdictSheet(
               <strong className="text-sm">Perché — zone toccate</strong>
               {verdict.zones.map(z => (
                 <div key={z.id}>
-                  <button onClick={() => toggleZone(z.id)}
+                  <button onClick={() => toggleZone(z.name)}
                     style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%',
                       padding: '5px 0', background: 'none', border: 0, color: 'inherit',
                       font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
@@ -100,7 +100,7 @@ export function VerdictSheet(
                       background: ZONE_COLORS[z.restrictionType] }} />
                     {z.name}
                   </button>
-                  {openZoneId === z.id && (
+                  {openZoneId === z.name && (
                     <div className="text-sm" style={{ color: 'var(--text-muted)', paddingLeft: 18 }}>
                       <div>Quota max: {z.upperLimitM != null
                         ? `${z.upperLimitM} m${z.verticalRef ? ` ${z.verticalRef}` : ''}` : '—'}</div>

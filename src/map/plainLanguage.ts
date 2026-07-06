@@ -3,10 +3,80 @@
 // armi con i droni. Nessuna conversione di quota: AMSL/WGS84 restano tali,
 // con un avviso esplicito (policy del progetto: AMSL mai convertito).
 
+import type { RestrictionType } from '../data/ed269.types';
+import { RESTRICTION_ORDER } from './mapStyle';
+
 /** Frasi pronte per il popup: headline in evidenza + righe secondarie. */
 export interface PlainZoneInfo {
   headline: string;
   lines: string[];
+}
+
+/** Dati raggruppati per nome zona: voce principale (frase semplice) +
+ *  elenco delle fasce di quota nei "Dettagli tecnici". */
+export interface GroupedZoneInfo {
+  /** Nome della zona (es. "LIML_MILANO/LINATE 18/36"). */
+  name: string;
+  headline: string;
+  lines: string[];
+  /** Lista di fasce (lower→upper) per i dettagli tecnici. */
+  bands: Array<{ lowerM: number | null; upperM: number; verticalRef: string | null }>;
+  /** Tipo della fascia principale (più restrittiva). */
+  mainRestrictionType: RestrictionType;
+  /** Message ED-269 della fascia principale. */
+  message: string | null;
+  /** Finestra di attività ED-269 della fascia principale. */
+  applicabilityText: string | null;
+}
+
+interface _BandEntry {
+  lowerM: number | null;
+  upperM: number;
+  verticalRef: string | null;
+  restrictionType: RestrictionType;
+}
+
+/** Raggruppa items per nome zona, ordina le bande per severità,
+ *  produce una voce principale (frase della banda più restrittiva)
+ *  e raccoglie tutte le bande per i dettagli tecnici. */
+export function plainGroupedZoneInfo(items: Array<Record<string, unknown>>): Array<GroupedZoneInfo> {
+  const groups = new Map<string, Array<Record<string, unknown>>>();
+  for (const p of items) {
+    const name = typeof p.name === 'string' ? p.name : '(senza nome)';
+    (groups.get(name) ?? groups.set(name, []).get(name)!).push(p);
+  }
+  const result: Array<GroupedZoneInfo> = [];
+  for (const [name, props] of groups) {
+    // Accoda i props originali con le bande, così dopo la sort posso risalire ai campi
+    const entries: Array<{ band: _BandEntry; props: Record<string, unknown> }> = props.map(p => ({
+      band: {
+        lowerM: typeof p.lowerLimitM === 'number' ? p.lowerLimitM : null,
+        upperM: typeof p.upperLimitM === 'number' ? p.upperLimitM : 0,
+        verticalRef: typeof p.verticalRef === 'string' ? p.verticalRef : null,
+        restrictionType: (typeof p.restrictionType === 'string'
+          ? p.restrictionType as RestrictionType
+          : 'conditional'),
+      },
+      props: p,
+    }));
+    entries.sort((a, b) =>
+      (RESTRICTION_ORDER[a.band.restrictionType] ?? 99) - (RESTRICTION_ORDER[b.band.restrictionType] ?? 99));
+    const main = entries[0]!;
+    const info = plainZoneInfo(main.props);
+    result.push({
+      name,
+      headline: info.headline,
+      lines: info.lines,
+      bands: entries.map(e => ({ lowerM: e.band.lowerM, upperM: e.band.upperM, verticalRef: e.band.verticalRef })),
+      mainRestrictionType: main.band.restrictionType,
+      message: typeof main.props.message === 'string' ? main.props.message : null,
+      applicabilityText: typeof main.props.applicabilityText === 'string' ? main.props.applicabilityText : null,
+    });
+  }
+  // Ordina i gruppi per restrittività del tipo principale
+  result.sort((a, b) =>
+    (RESTRICTION_ORDER[a.mainRestrictionType] ?? 99) - (RESTRICTION_ORDER[b.mainRestrictionType] ?? 99));
+  return result;
 }
 
 const HEADLINES: Record<string, string> = {

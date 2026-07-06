@@ -46,10 +46,10 @@ it('accordion: una zona alla volta + onZoneFocus', () => {
   const focus = vi.fn();
   render(<VerdictSheet {...base({ onZoneFocus: focus })} />);
   fireEvent.click(screen.getByRole('button', { name: /alfa/i }));
-  expect(focus).toHaveBeenLastCalledWith('a');
+  expect(focus).toHaveBeenLastCalledWith('Alfa');
   expect(screen.getByText('Nota A')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /beta/i }));
-  expect(focus).toHaveBeenLastCalledWith('b');
+  expect(focus).toHaveBeenLastCalledWith('Beta');
   expect(screen.queryByText('Nota A')).not.toBeInTheDocument();
   expect(screen.getByText('Nota B')).toBeInTheDocument();
 });

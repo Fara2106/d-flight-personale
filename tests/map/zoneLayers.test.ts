@@ -22,9 +22,9 @@ it('maps restriction types to colors via a data-driven expression', () => {
   expect(expr).toContain('#ef4444');
 });
 
-it('highlightFilter: id selezionato o sentinella che non matcha nulla', () => {
-  expect(highlightFilter('z9')).toEqual(['==', ['get', 'id'], 'z9']);
-  expect(highlightFilter(null)).toEqual(['==', ['get', 'id'], '__none__']);
+it('highlightFilter: name selezionato o sentinella che non matcha nulla', () => {
+  expect(highlightFilter('X')).toEqual(['==', ['get', 'name'], 'X']);
+  expect(highlightFilter(null)).toEqual(['==', ['get', 'name'], '__none__']);
 });
 
 describe('leggibilità zone sovrapposte', () => {
