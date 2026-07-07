@@ -15,16 +15,16 @@ export const RESTRICTION_ORDER: Record<RestrictionType, number> = {
   prohibited: 0, auth_required: 1, conditional: 2, none: 3,
 };
 
-/** Opacità del riempimento per severità: le zone innocue (spesso enormi) sono un
- *  velo leggero, così le pile di zone sovrapposte non diventano macchie scure. */
+/** Opacità del riempimento per severità: le zone innocue (spesso enormi) sono
+ *  invisibili per non creare l'effetto "inglobamento" visivo su molte zone. */
 export const ZONE_FILL_OPACITY: Record<RestrictionType, number> = {
-  prohibited: 0.32, auth_required: 0.24, conditional: 0.18, none: 0.12,
+  prohibited: 0.32, auth_required: 0.24, conditional: 0.18, none: 0,
 };
 
 /** Spessore del bordo per severità: i perimetri restano leggibili anche dove i
  *  riempimenti si mescolano. */
 export const ZONE_LINE_WIDTH: Record<RestrictionType, number> = {
-  prohibited: 2.4, auth_required: 1.8, conditional: 1.4, none: 1,
+  prohibited: 2.4, auth_required: 1.8, conditional: 1.4, none: 0,
 };
 
 export const ITALY_CENTER: [number, number] = [12.5, 42.0];

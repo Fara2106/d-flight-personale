@@ -35,16 +35,15 @@ describe('leggibilità zone sovrapposte', () => {
     expect(RESTRICTION_ORDER.none).toBe(3);
   });
 
-  it('fill-opacity decrescente con la severità: il verde è un velo, il rosso resta visibile', () => {
+  it('fill-opacity decrescente con la severità: il verde è invisibile per evitare effetto "inglobamento"', () => {
     const paint = buildFillPaint() as any;
     const op = (t: string) => evalMatch(paint['fill-opacity'], t);
     expect(op('prohibited')).toBeGreaterThan(op('auth_required'));
     expect(op('auth_required')).toBeGreaterThan(op('conditional'));
     expect(op('conditional')).toBeGreaterThan(op('none'));
-    for (const t of ['prohibited', 'auth_required', 'conditional', 'none']) {
-      expect(op(t)).toBeGreaterThan(0);
-      expect(op(t)).toBeLessThanOrEqual(0.5); // resta un overlay, non copre la mappa
-    }
+    expect(op('prohibited')).toBeLessThanOrEqual(0.5); // resta un overlay, non copre la mappa
+    // Le zone "none" sono invisibili (opacità 0): non inglobano visivamente altre zone
+    expect(op('none')).toBe(0);
   });
 
   it('fill-sort-key: le zone più restrittive vengono disegnate sopra', () => {
@@ -57,11 +56,13 @@ describe('leggibilità zone sovrapposte', () => {
     expect(layout['fill-sort-key']).toEqual(key);
   });
 
-  it('bordi gerarchici: line-width maggiore per zone più restrittive, bordo ben visibile', () => {
+  it('bordi gerarchici: line-width maggiore per zone più restrittive, bordi "none" invisibili', () => {
     const paint = buildLinePaint() as any;
     const w = (t: string) => evalMatch(paint['line-width'], t);
     expect(w('prohibited')).toBeGreaterThan(w('auth_required'));
-    expect(w('auth_required')).toBeGreaterThan(w('none'));
+    expect(w('auth_required')).toBeGreaterThan(w('conditional'));
+    // Le zone "none" sono invisibili (nessun bordo)
+    expect(w('none')).toBe(0);
     expect(JSON.stringify(paint['line-color'])).toContain('#ef4444');
     expect(paint['line-opacity']).toBeGreaterThanOrEqual(0.8);
   });
