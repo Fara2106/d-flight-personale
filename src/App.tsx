@@ -33,7 +33,7 @@ export default function App() {
   const profiles = useProfiles();
   const [verify, setVerify] = useState<VerifyUiState | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [highlightZoneName, setHighlightZoneName] = useState<string | null>(null);
+  const [highlightZoneId, setHighlightZoneId] = useState<string | null>(null);
 
   useEffect(() => { (async () => {
     setZones(await loadZones()); setMeta(await loadMeta());
@@ -59,7 +59,7 @@ export default function App() {
       profiles.activeDrone, profiles.pilot);
   }, [verify, zones, profiles.activeDrone, profiles.pilot]);
 
-  function closeVerify() { setVerify(null); setHighlightZoneName(null); }
+  function closeVerify() { setVerify(null); setHighlightZoneId(null); }
   function setPoint(lat: number, lon: number) {
     setVerify(v => (v ? { ...v, point: { lat, lon } } : v));
   }
@@ -68,7 +68,7 @@ export default function App() {
     <div style={{ position:'absolute', inset:0 }}>
       <MapView resolvedTheme={resolved} zones={zones}
         userPosition={geo.position} flyTo={flyTo}
-        highlightZoneName={highlightZoneName} onZoneFocus={setHighlightZoneName}
+        highlightZoneId={highlightZoneId} onZoneFocus={setHighlightZoneId}
         verify={verify} onVerifyPick={setPoint} />
 
       <div style={{ position:'absolute', top:12, left:12, right:12, display:'flex', gap:10, alignItems:'flex-start' }}>
@@ -114,7 +114,7 @@ export default function App() {
           drones={profiles.drones} activeDroneId={profiles.activeDroneId}
           onSelectDrone={id => { void profiles.activate(id); }}
           onOpenProfile={() => setProfileOpen(true)}
-          onClose={closeVerify} onZoneFocus={setHighlightZoneName} />
+          onClose={closeVerify} onZoneFocus={setHighlightZoneId} />
       )}
 
       {profileOpen && (

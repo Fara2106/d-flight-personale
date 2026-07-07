@@ -17,6 +17,8 @@ export interface PlainZoneInfo {
 export interface GroupedZoneInfo {
   /** Nome della zona (es. "LIML_MILANO/LINATE 18/36"). */
   name: string;
+  /** Id della banda principale (usato per l'evidenziazione sulla mappa). */
+  bandId: string;
   headline: string;
   lines: string[];
   /** Lista di fasce (lower→upper) per i dettagli tecnici. */
@@ -47,7 +49,6 @@ export function plainGroupedZoneInfo(items: Array<Record<string, unknown>>): Arr
   }
   const result: Array<GroupedZoneInfo> = [];
   for (const [name, props] of groups) {
-    // Accoda i props originali con le bande, così dopo la sort posso risalire ai campi
     const entries: Array<{ band: _BandEntry; props: Record<string, unknown> }> = props.map(p => ({
       band: {
         lowerM: typeof p.lowerLimitM === 'number' ? p.lowerLimitM : null,
@@ -65,6 +66,7 @@ export function plainGroupedZoneInfo(items: Array<Record<string, unknown>>): Arr
     const info = plainZoneInfo(main.props);
     result.push({
       name,
+      bandId: String(main.props.id ?? ''),
       headline: info.headline,
       lines: info.lines,
       bands: entries.map(e => ({ lowerM: e.band.lowerM, upperM: e.band.upperM, verticalRef: e.band.verticalRef })),
@@ -73,7 +75,6 @@ export function plainGroupedZoneInfo(items: Array<Record<string, unknown>>): Arr
       applicabilityText: typeof main.props.applicabilityText === 'string' ? main.props.applicabilityText : null,
     });
   }
-  // Ordina i gruppi per restrittività del tipo principale
   result.sort((a, b) =>
     (RESTRICTION_ORDER[a.mainRestrictionType] ?? 99) - (RESTRICTION_ORDER[b.mainRestrictionType] ?? 99));
   return result;

@@ -37,11 +37,11 @@ it('click su un nome apre solo quel dettaglio e notifica il focus', () => {
   const details = [...el.querySelectorAll('.zone-popup-detail')] as HTMLElement[];
   expect(details[1].hidden).toBe(false);
   expect(details[0].hidden).toBe(true);
-  expect(focus).toHaveBeenLastCalledWith('Alfa');
+  expect(focus).toHaveBeenLastCalledWith('a');
   heads[0].click(); // Papa: chiude Alfa
   expect(details[0].hidden).toBe(false);
   expect(details[1].hidden).toBe(true);
-  expect(focus).toHaveBeenLastCalledWith('Papa');
+  expect(focus).toHaveBeenLastCalledWith('p');
 });
 
 it('ri-click sulla zona aperta la chiude e azzera il focus', () => {
@@ -60,7 +60,7 @@ it('singola zona: parte aperta e con focus', () => {
   const el = buildPopupContent([zoneA], focus);
   const detail = el.querySelector('.zone-popup-detail') as HTMLElement;
   expect(detail.hidden).toBe(false);
-  expect(focus).toHaveBeenLastCalledWith('Alfa');
+  expect(focus).toHaveBeenLastCalledWith('a');
 });
 
 it('il dettaglio mostra quota, message e finestra di attività (solo textContent)', () => {

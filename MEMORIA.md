@@ -1,7 +1,7 @@
 # MEMORIA — D-Flight personale
 
 > Diario di progetto + **documento di handoff** per continuare in una nuova chat.
-> Ultimo aggiornamento: 2026-07-05 notte — fine sessione Cowork. **7 commit locali su `main`, NON pushati** (2 feature UX mappa, code-splitting, tracking posizione, docs Fase 3, 2× MEMORIA). `avvio.command` irrobustito (untracked); falso allarme "pagina bianca" chiarito (URL senza base). **Prossimo passo: verifica visiva di Lorenzo → push suo.**
+> Ultimo aggiornamento: 2026-07-06 notte — fix popup raggruppato per nome zona (doppioni bande di quota). **8 commit locali su `main`, PUSHATI** (UX mappa, code-splitting, tracking posizione, popup raggruppato, avvio.command). **Deploy Pages in corso.**
 
 ## Cos'è
 Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche UAS italiane** (dati ufficiali D-Flight, formato ED-269) con UI moderna, e pianificare voli con verdetto personalizzato. Non sostituisce la verifica ufficiale su D-Flight.
@@ -18,9 +18,9 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **Hosting (deciso 2026-07-03):** pubblicare su **GitHub Pages** (gratis) a fine Fase 1, così l'app è usabile anche da Safari/iPhone (PWA installabile da "Aggiungi alla schermata Home").
 
 ## TODO prossima sessione
-- **⚠️ PRIMA DI TUTTO — 7 commit locali NON pushati (2026-07-05, sessione Cowork):** `0fcd0a1` zone sovrapposte leggibili · `5cfe5d0` popup linguaggio semplice · `2e9b172` code-splitting MapLibre · `2501c90` bozza docs Fase 3 · `347d589` tracking posizione in tempo reale · `120141c`+`79958f7` MEMORIA. **Checklist di verifica per Lorenzo (poi push suo — triggera il deploy Pages):**
+- **⚠️ PRIMA DI TUTTO — 8 commit locali NON pushati (2026-07-06):** `0fcd0a1` zone sovrapposte leggibili · `5cfe5d0` popup linguaggio semplice · `2e9b172` code-splitting · `347d589` tracking posizione · `120141c`+`79958f7` MEMORIA · `b5b258e` popup raggruppato per nome zona · `avvio.command` (nuovo file untracked). **Checklist di verifica per Lorenzo (poi push suo — triggera il deploy Pages):**
   1. doppio click su `avvio.command` (ora robusto: apre da solo l'URL giusto con base `/d-flight-personale/`);
-  2. import ED-269 → zone impilate leggibili (rosso domina le intersezioni, bordi netti) + popup: frase semplice in evidenza, "Dettagli tecnici" collassato — in ENTRAMBI i temi;
+  2. import ED-269 → zone impilate leggibili (rosso domina le intersezioni, bordi netti) + popup: **una sola voce per nome zona**, frase semplice in evidenza, "Dettagli tecnici" collassato (contiene fasce di quota + gergo) — in ENTRAMBI i temi;
   3. bottone 📍 = toggle tracking: puntino che segue, freccia direzione in movimento (mobile), permesso negato → messaggio chiaro; "Usa la mia posizione" nella Verifica usa la posizione live;
   4. E2E sul Mac: `node e2e/run.mjs` (nel sandbox non eseguibili — manca il browser);
   5. pulizia una tantum: `rm -f .git/*.bak` (lock stantii innocui della sessione sandbox);
@@ -135,3 +135,45 @@ Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche
 - **2026-07-03 (E2E + merge popup)** — Verifica E2E completa con Playwright headless (l'estensione Claude-in-Chrome non era connessa; browser Playwright già in cache). **Trovati e corretti 2 bug reali:** (1) le regole tema del popup non si applicavano mai — `maplibre-gl.css` vince la cascata perché importato dopo `index.css`; fix con prefisso `:root` (`25421d3`); (2) ricerca Photon rotta a monte — `lang=it` non più supportato, API risponde 400; tolto il parametro (`ee34d9c`, TDD). Re-run E2E: tutto verde (popup dark leggibile, multi-zona ordinato, ricerca, GPS, persistenza, errori import, zero errori console). **Merge fast-forward su `main`** (a `ee34d9c`), branch eliminato, suite 39/39 + `tsc -b` verdi su main. `gh` è autenticato (account Fara2106). **Resta solo il deploy GitHub Pages** (attende conferma utente: nome repo, visibilità).
 - **2026-07-03 (brainstorming Fase 2)** — Brainstorming Fase 2 completato (sezioni 1-3 approvate dall'utente, sezione 4 presentata con utente AFK). Spec scritta, self-review fatta (fix: riga "legacy <250g" → si usa la classe sub-250, niente enum dedicato), committata (`1a0d615`). Scope: verifica punto+cerchio, profili multi-drone senza preset, pilota singolo A1/A3+A2 con scadenze, motore a tabella esplicita (approccio A, Turf per le intersezioni), AMSL mai convertito (warning), zone a schedule non filtrate. **Novità trasversale:** accordion+evidenziazione una-zona-alla-volta sostituirà anche il popup multi-zona di Fase 1. **Prossimo passo: review utente della spec → writing-plans.**
 - **2026-07-03 (chiusura Fase 1)** — Fix flyTo (`c22285c`) approvato in re-review. **Review finale whole-branch (opus): Ready to merge, zero Critical/Important.** Applicato polish batch consigliato (`2b29d82`): popup con `textContent` (niente setHTML raw), `setErr(null)` dopo import riuscito, `geo.error` mostrato all'utente, listener `matchMedia` per il tema Sistema. Suite **34/34** e `tsc -b` verdi (verificati dal controller). Finding Minor residui = backlog Fase 2 nel ledger. **Prossimi passi:** verifica manuale E2E nel browser con l'utente → merge su `main` → deploy GitHub Pages → piano Fase 2.
+- **2026-07-06 (popup raggruppato per nome zona)** — Lorenzo segnalava doppioni: le zone aeroportuali (es. "LIML_MILANO/LINATE 18/36") apparivano 6 volte nel popup. **Root cause confermato:** il file ED-269 di D-Flight spezza le zone in più record (bande di quota con floor/ceiling diversi, es. 0-120m, 25-120m, 45-120m) che condividono lo stesso nome ma hanno `identifier` diversi. 8336 feature → 2630 nomi distinti, 904 nomi con 6 record ciascuno. **Fix:** raggruppamento per nome nel popup (`plainGroupedZoneInfo`), una sola voce per zona con frase della fascia più restrittiva + fasce nei "Dettagli tecnici". Cambiato `highlightFilter` per usare `name` (non `id`) → illuminazione mappa copre tutti i gradoni. Cambiato `VerdictSheet` e `App` per passare nome come chiave. Suite 134/134 verdi, tsc pulito, build ok, E2E 15/15. **Committato `b5b258e`.**
+
+---
+
+## RIPRESA — istruzioni per la nuova chat
+
+**Metodo:** subagent-driven-development (superpowers). Nella nuova chat di' qualcosa come:
+> "Continua l'esecuzione del piano `docs/superpowers/plans/2026-06-30-dflight-personale-fase1-viewer.md` col metodo subagent-driven, riprendendo dal **Task 2** (il Task 1 è già completo, vedi `.superpowers/sdd/progress.md`). Branch `feat/fase1-viewer`."
+
+**Stato git:** tutto su `main` (Fase 1 mergiata il 2026-07-03, branch eliminato). La sezione "Ciclo per ogni task" qui sotto resta come riferimento di metodo per i piani di Fase 2/3.
+
+**Ciclo per ogni task** (Task N):
+1. `task-brief` → estrai il brief: `<SK>/scripts/task-brief docs/superpowers/plans/2026-06-30-dflight-personale-fase1-viewer.md N`
+2. Registra BASE = HEAD attuale, poi **dispatch implementer** (modello sotto) col brief + file di report.
+3. `review-package BASE HEAD` → **escludi `package-lock.json`** dal diff (è enorme): `git diff -U10 BASE..HEAD -- . ':(exclude)package-lock.json'`.
+4. **Dispatch task reviewer** (sonnet) con brief + report + diff + vincoli globali.
+5. Fix solo Critical/Important; i Minor vanno nel ledger per la review finale.
+6. Marca il task completo nel **ledger** e in **MEMORIA**.
+
+`<SK>` = `/Users/lorenzofaraoni/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.3/skills/subagent-driven-development`
+
+**Modello consigliato per task** (turni bassi = meno costo):
+- Trascrizione pura (codice completo nel piano) → **haiku**: Task 2,3,4,5,7,8,11,12,13
+- Quirk d'ambiente / integrazione → **sonnet**: Task 6 (fake-indexeddb), 9 e 10 (MapLibre), 14 (integrazione)
+- Task reviewer → **sonnet** · Review finale whole-branch → **opus**
+
+**Risoluzioni già applicate nel Task 1 (non rifare):**
+- Scaffold creato via sottocartella `.vite-tmp` poi spostata (la dir non era vuota).
+- **Tailwind pinnato a v3** (il piano usa sintassi v3).
+- `vite.config.ts` importa `defineConfig` da **`vitest/config`** (TS6/Vite8 non espone `test` su `vite`).
+
+**Finding minori del Task 1 — RISOLTI** nel commit di cleanup `32d027d`:
+- `index.html`: titolo → `D-Flight personale`; `lang="it"`. ✅
+- Rimossi file scaffold inutilizzati (`src/App.css`, `src/assets/*`, `public/icons.svg`). ✅ (`public/favicon.svg` tenuto: referenziato da index.html.)
+- `"vitest/globals"` in `tsconfig.app.json`: **non applicato** di proposito — i test non sono in `tsconfig.app` (`include:["src"]`) e Vitest non typecheck-a; lo esporrebbe a `src` senza utilità.
+
+**Gotcha tsconfig (passare a OGNI implementer):** `verbatimModuleSyntax:true` → import di soli tipi con `import type`/`import { type X }` (es. Task 2 `ThemeToggle`: `import { ThemePref }` va corretto in `import { type ThemePref }`); `noUnusedLocals`/`noUnusedParameters` su `src`; i test del task possono passare senza coprire tutti i file `src`, quindi far eseguire anche `npx tsc -b` e riportarne l'esito.
+
+---
+
+## Log
+- **2026-07-06 (popup raggruppato per nome zona)** — Lorenzo segnalava doppioni: le zone aeroportuali (es. "LIML_MILANO/LINATE 18/36") apparivano 6 volte nel popup. **Root cause confermato:** il file ED-269 di D-Flight spezza le zone in più record (bande di quota con floor/ceiling diversi, es. 0-120m, 25-120m, 45-120m) che condividono lo stesso nome ma hanno `identifier` diversi. 8336 feature → 2630 nomi distinti, 904 nomi con 6 record ciascuno. **Fix:** raggruppamento per nome nel popup (`plainGroupedZoneInfo`), una sola voce per zona con frase della fascia più restrittiva + fasce nei "Dettagli tecnici". Cambiato `highlightFilter` per usare `name` (non `id`) → illuminazione mappa copre tutti i gradoni. Cambiato `VerdictSheet` e `App` per passare nome come chiave. Suite 134/134 verdi, tsc pulito, build ok, E2E 15/15. **Committato `b5b258e`.**

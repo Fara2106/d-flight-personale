@@ -87,12 +87,13 @@ describe('plainGroupedZoneInfo: raggruppamento per nome', () => {
 
   it('zone con nome identico → una voce con fasce multiple', () => {
     const items = [
-      { name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 0, verticalRef: 'AGL' },
-      { name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 30, verticalRef: 'AGL' },
+      { id: 'x1', name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 0, verticalRef: 'AGL' },
+      { id: 'x2', name: 'Linate', restrictionType: 'auth_required', upperLimitM: 120, lowerLimitM: 30, verticalRef: 'AGL' },
     ];
     const result = plainGroupedZoneInfo(items);
     expect(result).toHaveLength(1);
     expect(result[0]!.name).toBe('Linate');
+    expect(result[0]!.bandId).toBe('x1'); // bandId = id della banda più restrittiva
     expect(result[0]!.bands).toHaveLength(2);
     expect(result[0]!.bands[0]!.lowerM).toBe(0);
     expect(result[0]!.bands[1]!.lowerM).toBe(30);

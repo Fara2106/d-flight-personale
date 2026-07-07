@@ -6,22 +6,18 @@ const FALLBACK_COLOR = '#888888';
 /** Popup per una o più zone sovrapposte: nomi raggruppati (le bande di quota
  *  di una stessa zona ED-269 finiscono in una sola voce), ordinati per
  *  restrittività, accordion una-zona-alla-volta. L'apertura notifica
- *  onZoneFocus(name) per l'evidenziazione sulla mappa.
- *  Solo textContent (niente HTML raw). */
+ *  onZoneFocus(bandId) per l'evidenziazione sulla mappa: usa l'id della banda
+ *  più restrittiva (NON il nome), così la mappa illumina solo quella porzione
+ *  e non tutti i gradoni di quota della zona. Solo textContent (niente HTML raw). */
 export function buildPopupContent(
   items: Array<Record<string, unknown>>,
-  onZoneFocus?: (name: string | null) => void,
+  onZoneFocus?: (id: string | null) => void,
 ): HTMLElement {
   const grouped = plainGroupedZoneInfo(items);
 
   const root = document.createElement('div');
   root.className = 'zone-popup';
   let openIdx: number | null = null;
-
-  const syncHidden = () => {
-    const details = root.querySelectorAll('.zone-popup-detail') as NodeListOf<HTMLElement>;
-    details.forEach((d, i) => { d.hidden = openIdx !== i; });
-  };
 
   for (let i = 0; i < grouped.length; i++) {
     const gi = grouped[i]!;
@@ -41,7 +37,7 @@ export function buildPopupContent(
 
     head.addEventListener('click', () => {
       openIdx = openIdx === i ? null : i;
-      onZoneFocus?.(openIdx === null ? null : gi.name);
+      onZoneFocus?.(openIdx === null ? null : gi.bandId);
       syncHidden();
     });
     item.appendChild(head);
@@ -97,8 +93,14 @@ export function buildPopupContent(
 
   if (grouped.length === 1) {
     openIdx = 0;
-    onZoneFocus?.(grouped[0]!.name);
+    onZoneFocus?.(grouped[0]!.bandId);
   }
+
+  const syncHidden = () => {
+    const details = root.querySelectorAll('.zone-popup-detail') as NodeListOf<HTMLElement>;
+    details.forEach((d, i) => { d.hidden = openIdx !== i; });
+  };
+
   syncHidden();
   return root;
 }
