@@ -69,7 +69,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ position:'absolute', inset:0 }}>
+    <div style={{ position:'absolute', inset:0 }} data-build={import.meta.env.VITE_BUILD_ID ?? ''}>
       <MapView resolvedTheme={resolved} zones={zones}
         userPosition={geo.position} flyTo={flyTo}
         highlightZoneId={highlightZoneId} onZoneFocus={setHighlightZoneId}
