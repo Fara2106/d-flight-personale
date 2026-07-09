@@ -8,10 +8,27 @@ import {
 import { zonesToGeoJSON } from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
 import { circleFeature } from '../verify/verifyLayers';
+import { warmVisibleTiles, type TileViewState } from '../pwa/warmMapCache';
+import { MAP_TILE_URL_RE } from '../pwa/mapStyleCache';
 import type { GeoPosition } from '../location/useGeolocation';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
+
+/** Vista corrente per il warm dei tile: template CARTO + zoom + bounds. */
+function tileViewState(m: maplibregl.Map): TileViewState {
+  const templates = Object.keys(m.getStyle()?.sources ?? {}).flatMap((id) => {
+    const s = m.getSource(id) as { tiles?: string[] } | undefined;
+    // solo i tile CARTO: la sorgente zone è GeoJSON e non ha template
+    return (s?.tiles ?? []).filter((t) =>
+      MAP_TILE_URL_RE.test(t.replace(/\{[zxy]\}/g, '0')));
+  });
+  const b = m.getBounds();
+  return {
+    templates, zoom: m.getZoom(),
+    bounds: { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() },
+  };
+}
 
 /** Match data-driven su restrictionType → valore numerico per tipo. */
 function matchByType(
@@ -143,6 +160,11 @@ export function MapView(
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
+    // sfondo mappa offline: in prima sessione i worker MapLibre bypassano il
+    // SW → warmiamo i tile della vista dal main thread a ogni assestamento
+    // ('idle' garantisce che il tiles.json — e quindi i template — sia caricato)
+    m.once('idle', () => warmVisibleTiles(() => tileViewState(m)));
+    m.on('moveend', () => warmVisibleTiles(() => tileViewState(m)));
     m.on('click', (e) => {
       if (verifyRef.current) onVerifyPickRef.current?.(e.lngLat.lat, e.lngLat.lng);
     });

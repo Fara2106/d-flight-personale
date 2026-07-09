@@ -21,6 +21,12 @@ export default defineConfig({
       // il manifest è un file statico nostro (public/manifest.webmanifest)
       manifest: false,
       workbox: {
+        // il PRIMO SW prende il controllo della pagina appena attivo (senza
+        // reload): serve al warmup delle cache mappa (warmMapCache.ts) — senza
+        // di esso l'offline funziona solo dalla seconda sessione online (bug
+        // test iPhone 2026-07-09). Gli AGGIORNAMENTI restano col flusso
+        // prompt: il SW nuovo aspetta il consenso dal toast (skipWaiting off).
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         runtimeCaching: [
           {
