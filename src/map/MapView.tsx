@@ -74,8 +74,15 @@ export function buildLinePaint(): maplibregl.LineLayerSpecification['paint'] {
   return {
     'line-color': zoneColorExpr(),
     'line-width': matchByType(ZONE_LINE_WIDTH, 1.2),
-    'line-opacity': 0.9,
+    // bordo pieno solo sulla fascia più estesa della zona (bandPrimary): le
+    // fasce interne del file D-Flight restano accennate, non un groviglio
+    'line-opacity': ['case', ['==', ['get', 'bandPrimary'], true], 0.9, 0.25],
   };
+}
+
+/** Etichetta quota: una per (zona, quota) — sulla fascia più estesa. */
+export function labelPrimaryFilter(): maplibregl.FilterSpecification {
+  return ['==', ['get', 'labelPrimary'], true] as maplibregl.FilterSpecification;
 }
 
 /** Etichette quota: in collisione tra zone impilate vince la più restrittiva. */
@@ -124,6 +131,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     filter: highlightFilter(highlightId),
     paint: { 'line-color': '#0a84ff', 'line-width': 3 } });
   map.addLayer({ id: 'zones-label', type: 'symbol', source: SRC,
+    filter: labelPrimaryFilter(),
     layout: buildLabelLayout(),
     paint: { 'text-color': '#1c2530', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4 } });
 }

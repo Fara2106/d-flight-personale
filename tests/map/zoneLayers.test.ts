@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildFillPaint, buildFillLayout, buildLinePaint, buildLabelLayout,
-  severitySortKey, highlightFilter,
+  severitySortKey, highlightFilter, labelPrimaryFilter,
 } from '../../src/map/MapView';
 import { RESTRICTION_ORDER } from '../../src/map/mapStyle';
 
@@ -64,7 +64,8 @@ describe('leggibilità zone sovrapposte', () => {
     // Le zone "none" sono invisibili (nessun bordo)
     expect(w('none')).toBe(0);
     expect(JSON.stringify(paint['line-color'])).toContain('#ef4444');
-    expect(paint['line-opacity']).toBeGreaterThanOrEqual(0.8);
+    // ora è una case-expression per fascia: il ramo "primaria" resta ben visibile
+    expect((paint['line-opacity'] as unknown[])[2]).toBeGreaterThanOrEqual(0.8);
   });
 
   it('etichette: symbol-sort-key dà priorità alla zona più restrittiva in collisione', () => {
@@ -73,5 +74,21 @@ describe('leggibilità zone sovrapposte', () => {
     // sort-key più basso = piazzata prima = vince la collisione
     expect(k('prohibited')).toBeLessThan(k('none'));
     expect(layout['text-field']).toEqual(['get', 'label']);
+  });
+});
+
+describe('dedup fasce sulla mappa (bordi annidati + etichette duplicate)', () => {
+  it('line-opacity: bordo pieno solo su bandPrimary, accennato sulle altre fasce', () => {
+    const paint = buildLinePaint() as any;
+    const expr = paint['line-opacity'] as unknown[];
+    expect(expr[0]).toBe('case');
+    expect(JSON.stringify(expr)).toContain('bandPrimary');
+    const [, , full, faint] = expr as [string, unknown, number, number];
+    expect(full).toBeGreaterThan(faint);
+    expect(faint).toBeGreaterThan(0); // le fasce restano accennate, non invisibili
+  });
+
+  it('labelPrimaryFilter: le etichette si disegnano solo sulla fascia primaria', () => {
+    expect(labelPrimaryFilter()).toEqual(['==', ['get', 'labelPrimary'], true]);
   });
 });
