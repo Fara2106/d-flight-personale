@@ -16,6 +16,7 @@ import { useProfiles } from './profiles/useProfiles';
 import { ProfilePanel } from './profiles/ProfilePanel';
 import { VerifyControls } from './verify/VerifyControls';
 import { VerdictSheet } from './verify/VerdictSheet';
+import { UpdateToast } from './pwa/UpdateToast';
 import { zonesAtPoint } from './verify/intersect';
 import { evaluate } from './rules/rulesEngine';
 import type { Zone, DatasetMeta } from './data/ed269.types';
@@ -70,6 +71,8 @@ export default function App() {
         userPosition={geo.position} flyTo={flyTo}
         highlightZoneId={highlightZoneId} onZoneFocus={setHighlightZoneId}
         verify={verify} onVerifyPick={setPoint} />
+
+      <UpdateToast />
 
       <div style={{ position:'absolute', top:12, left:12, right:12, display:'flex', gap:10, alignItems:'flex-start' }}>
         <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} /></div>
