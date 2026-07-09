@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 // estensione .ts esplicita: vite.config è typecheckato sotto tsconfig.node
 // (module: nodenext) che la richiede; allowImportingTsExtensions la permette
-import { MAP_STYLE_URL_RE } from './src/pwa/mapStyleCache.ts';
+import { MAP_STYLE_URL_RE, MAP_TILE_URL_RE } from './src/pwa/mapStyleCache.ts';
 
 export default defineConfig({
   // GitHub Pages serve l'app da https://<user>.github.io/d-flight-personale/
@@ -28,6 +28,18 @@ export default defineConfig({
             urlPattern: MAP_STYLE_URL_RE,
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'carto-style-v1', expiration: { maxEntries: 80 } },
+          },
+          {
+            // tile vettoriali: cache limitata CacheFirst (decisione A rivista) —
+            // offline si vede lo sfondo delle aree visitate; il cap per numero
+            // ed età tiene la cache piccola e riduce le richieste al CDN
+            urlPattern: MAP_TILE_URL_RE,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'carto-tiles-v1',
+              expiration: { maxEntries: 300, maxAgeSeconds: 7 * 24 * 60 * 60, purgeOnQuotaError: true },
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
         ],
       },

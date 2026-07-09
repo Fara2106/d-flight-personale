@@ -56,6 +56,15 @@ try {
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, { timeout: 10000 });
   check('service worker attivo e controllante', true);
 
+  // 3b. i tile della vista Italia iniziale entrano nella cache runtime
+  // (la pagina ora è controllata: le fetch dei tile passano dal SW)
+  await page.waitForFunction(async () => {
+    if (!(await caches.has('carto-tiles-v1'))) return false;
+    const c = await caches.open('carto-tiles-v1');
+    return (await c.keys()).length > 0;
+  }, { timeout: 20000 });
+  check('tile mappa in cache runtime (carto-tiles-v1)', true);
+
   // 4. OFFLINE: shell dal precache, dati da IndexedDB
   await context.setOffline(true);
   await page.reload();
