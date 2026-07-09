@@ -77,12 +77,15 @@ export default function App() {
 
       <UpdateToast />
 
-      <div style={{ position:'absolute', top:12, left:12, right:12, display:'flex', gap:10, alignItems:'flex-start' }}>
+      <div style={{ position:'absolute', top:'calc(var(--safe-top) + 12px)',
+        left:'calc(var(--safe-left) + 12px)', right:'calc(var(--safe-right) + 12px)',
+        display:'flex', gap:10, alignItems:'flex-start' }}>
         <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} disabled={!online} /></div>
         <ThemeToggle value={theme} onChange={setTheme} />
       </div>
 
-      <div style={{ position:'absolute', bottom:12, left:12, display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ position:'absolute', bottom:'calc(var(--safe-bottom) + 12px)',
+        left:'calc(var(--safe-left) + 12px)', display:'flex', flexDirection:'column', gap:10 }}>
         {!online && <OfflineBanner />}
         <DataStatusBanner meta={meta} />
         <Legend />
@@ -90,7 +93,8 @@ export default function App() {
       </div>
 
       {/* bottom: 44 per non coprire l'attribution CARTO (fix backlog Fase 1) */}
-      <div style={{ position:'absolute', bottom:44, right:12, display:'flex', flexDirection:'column', gap:10, alignItems:'flex-end' }}>
+      <div style={{ position:'absolute', bottom:'calc(var(--safe-bottom) + 44px)',
+        right:'calc(var(--safe-right) + 12px)', display:'flex', flexDirection:'column', gap:10, alignItems:'flex-end' }}>
         <button onClick={() => setVerify({ point: null, radiusM: 100 })}
           disabled={zones.length === 0 || !!verify}
           title={zones.length === 0 ? 'Importa prima le zone' : 'Posso volare qui?'}
@@ -137,7 +141,9 @@ export default function App() {
           <EmptyState onImported={async () => { await refresh(); }} onError={setErr} />
         </div>
       )}
-      {(err ?? geo.error) && <div style={{ position:'absolute', top:64, left:12, right:12, color:'#ef4444' }}>{err ?? geo.error}</div>}
+      {(err ?? geo.error) && <div style={{ position:'absolute', top:'calc(var(--safe-top) + 64px)',
+        left:'calc(var(--safe-left) + 12px)', right:'calc(var(--safe-right) + 12px)',
+        color:'#ef4444' }}>{err ?? geo.error}</div>}
     </div>
   );
 }

@@ -5,6 +5,11 @@
 :root {
   --bg: #f5f6f8; --surface: #ffffff; --text: #1c2530; --text-muted: #8a93a0;
   --accent: #007aff; --shadow: 0 10px 28px rgba(30,60,90,.18);
+  /* safe area iOS (viewport-fit=cover): 0 dove notch/barra home non esistono */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 [data-theme='dark'] {
   --bg: #0f141b; --surface: #1f2630; --text: #e8edf3; --text-muted: #8a93a0;
@@ -64,13 +69,22 @@ body { background: var(--bg); color: var(--text);
   border-right: 5px solid transparent; border-bottom: 8px solid var(--accent); }
 
 /* Barra della modalità verifica */
-.verify-controls { position: absolute; top: 64px; left: 50%;
+.verify-controls { position: absolute; top: calc(64px + var(--safe-top)); left: 50%;
   transform: translateX(-50%); z-index: 20; max-width: calc(100vw - 24px); }
 
 /* Scheda verdetto: card a destra su desktop, bottom sheet su mobile */
-.verdict-sheet { position: absolute; right: 12px; top: 64px; width: 360px;
+.verdict-sheet { position: absolute; right: 12px; top: calc(64px + var(--safe-top));
+  width: 360px;
   max-width: calc(100vw - 24px); max-height: 72vh; overflow-y: auto; z-index: 20; }
 @media (max-width: 640px) {
   .verdict-sheet { top: auto; right: 0; left: 0; bottom: 0; width: auto;
-    max-height: 55vh; border-radius: 16px 16px 0 0; }
+    max-height: 55vh; border-radius: 16px 16px 0 0;
+    /* il contenuto non finisce sotto la barra home */
+    padding-bottom: var(--safe-bottom); }
 }
+
+/* Controlli MapLibre (zoom in alto a destra, attribution in basso) dentro le
+   safe area; :root per vincere su maplibre-gl.css (gotcha cascata, v. popup) */
+:root .maplibregl-ctrl-top-right { top: var(--safe-top); right: var(--safe-right); }
+:root .maplibregl-ctrl-bottom-right { bottom: var(--safe-bottom); right: var(--safe-right); }
+:root .maplibregl-ctrl-bottom-left { bottom: var(--safe-bottom); left: var(--safe-left); }
