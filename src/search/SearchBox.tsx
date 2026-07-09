@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { geocode, type GeocodeResult } from './geocode';
-export function SearchBox({ onPick }: { onPick: (r: GeocodeResult) => void }) {
+export function SearchBox({ onPick, disabled = false }:
+  { onPick: (r: GeocodeResult) => void; disabled?: boolean }) {
   const [q, setQ] = useState(''); const [res, setRes] = useState<GeocodeResult[]>([]);
   const controllerRef = useRef<AbortController | null>(null);
   async function run(v: string) {
@@ -19,7 +20,9 @@ export function SearchBox({ onPick }: { onPick: (r: GeocodeResult) => void }) {
   return (
     <div className="relative">
       <input value={q} onChange={e => run(e.target.value)} placeholder="⌕ Cerca un luogo…"
-        className="w-full rounded-full px-4 py-2.5 text-sm outline-none"
+        disabled={disabled}
+        title={disabled ? 'Ricerca non disponibile offline' : undefined}
+        className="w-full rounded-full px-4 py-2.5 text-sm outline-none disabled:opacity-50"
         style={{ background:'var(--surface)', color:'var(--text)', boxShadow:'var(--shadow)' }} />
       {res.length > 0 && (
         <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl"

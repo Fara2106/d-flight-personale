@@ -17,6 +17,8 @@ import { ProfilePanel } from './profiles/ProfilePanel';
 import { VerifyControls } from './verify/VerifyControls';
 import { VerdictSheet } from './verify/VerdictSheet';
 import { UpdateToast } from './pwa/UpdateToast';
+import { OfflineBanner } from './ui/OfflineBanner';
+import { useOnline } from './ui/useOnline';
 import { zonesAtPoint } from './verify/intersect';
 import { evaluate } from './rules/rulesEngine';
 import type { Zone, DatasetMeta } from './data/ed269.types';
@@ -35,6 +37,7 @@ export default function App() {
   const [verify, setVerify] = useState<VerifyUiState | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [highlightZoneId, setHighlightZoneId] = useState<string | null>(null);
+  const online = useOnline();
 
   useEffect(() => { (async () => {
     setZones(await loadZones()); setMeta(await loadMeta());
@@ -75,11 +78,12 @@ export default function App() {
       <UpdateToast />
 
       <div style={{ position:'absolute', top:12, left:12, right:12, display:'flex', gap:10, alignItems:'flex-start' }}>
-        <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} /></div>
+        <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} disabled={!online} /></div>
         <ThemeToggle value={theme} onChange={setTheme} />
       </div>
 
       <div style={{ position:'absolute', bottom:12, left:12, display:'flex', flexDirection:'column', gap:10 }}>
+        {!online && <OfflineBanner />}
         <DataStatusBanner meta={meta} />
         <Legend />
         <Disclaimer />
