@@ -33,7 +33,7 @@ Rendere l'app **installabile** (PWA su iPhone/Android/desktop) e **utilizzabile 
 
 | # | Tema | Decisione |
 |---|------|-----------|
-| A | **Cache dei tile CARTO** | **Nessuna cache tile**: offline = zone su sfondo neutro. I TOS del basemap free CARTO scoraggiano il caching massivo; il verdetto non dipende dai tile. La cache limitata resta possibile miglioria futura. |
+| A | **Cache dei tile CARTO** | ~~Nessuna cache tile~~ **RIVISTA il 2026-07-09 sera, dopo il test offline di Lorenzo** ("la mappa sì dai, anche solo dell'Italia"): **cache runtime LIMITATA dei tile** — CacheFirst, max 300 tile, TTL 7 giorni (l'opzione 2 originale). Offline si vede lo sfondo mappa delle aree visitate di recente (l'Italia d'apertura c'è sempre: l'app parte su ITALY_CENTER). Il limite per numero+età tiene la cache piccola (~15 MB max) e CacheFirst *riduce* le richieste al CDN rispetto a nessuna cache — scelta difendibile sui TOS. Il verdetto continua a NON dipendere dai tile. |
 | B | **vite-plugin-pwa (Workbox) vs SW scritto a mano** | Spike con criterio oggettivo — **ESEGUITO il 2026-07-09 durante la scrittura del piano, esito: PLUGIN.** `vite-plugin-pwa@1.3.0` builda pulito su rolldown-vite 8, precache corretto (8 entry, chunk `maplibre-*` incluso, URL relativi allo scope), `navigateFallback: index.html`, e shell servita **davvero offline** in un test Playwright (`setOffline(true)` → reload → app renderizza). Il piano contiene solo la variante plugin. |
 | C | **Bottone "Installa app" custom** (`beforeinstallprompt`, solo Chromium) | **No**: si lascia il prompt nativo del browser; su iOS comunque non esiste. |
 | D | **Icona PWA** | **Disegno NUOVO** (scelta di Lorenzo, diversa dalla raccomandazione). **Design approvato il 2026-07-09: proposta "B — Zona sulla mappa"** (mappa notturna stilizzata blu navy, zona circolare rossa ED-269 semitrasparente con bordo, quadricottero bianco geometrico sopra; drone dentro la zona sicura maskable). Dall'SVG master si generano i png 192/512/maskable-512/apple-touch-180, committati in `public/icons/` — niente step di build extra. |
@@ -48,7 +48,7 @@ Rendere l'app **installabile** (PWA su iPhone/Android/desktop) e **utilizzabile 
 ## 6. Esperienza utente (riassunto)
 
 - **Prima visita (online):** nulla cambia; il browser propone l'installazione dove supportato.
-- **Installata, offline in campo:** l'app si apre, mappa su sfondo neutro (o tile cacheati, decisione A), zone colorate consultabili con popup, Verifica/Profilo/verdetto funzionanti al 100%; banner "Sei offline"; ricerca disabilitata con tooltip.
+- **Installata, offline in campo:** l'app si apre con lo sfondo mappa delle aree visitate di recente (cache tile limitata, decisione A rivista; aree mai visitate = sfondo neutro), zone colorate consultabili con popup, Verifica/Profilo/verdetto funzionanti al 100%; banner "Sei offline"; ricerca disabilitata con tooltip.
 - **Nuova versione pubblicata:** al primo avvio online compare il toast "Aggiorna"; tap → reload con la nuova versione.
 
 ## 7. Rischi e mitigazioni
