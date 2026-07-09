@@ -1,7 +1,7 @@
 # D-Flight personale — Fase 3: offline / PWA
 
-- **Data:** 2026-07-05
-- **Stato:** **BOZZA — proposta da revisionare con Lorenzo** (nessun brainstorming fatto: le decisioni aperte sono marcate ⚠️ e vanno validate prima di scrivere il codice del piano)
+- **Data:** 2026-07-05 (decisioni sciolte: 2026-07-09)
+- **Stato:** **APPROVATA — decisioni A–D sciolte con Lorenzo il 2026-07-09** (vedi §4). Prossimo passo: completare il piano col codice per task.
 - **Spec madre:** `2026-06-30-dflight-personale-design.md` (§ device/PWA offline)
 
 ---
@@ -29,14 +29,14 @@ Rendere l'app **installabile** (PWA su iPhone/Android/desktop) e **utilizzabile 
 5. **UX offline** — banner discreto "Sei offline" (riuso pattern `DataStatusBanner`); ricerca Photon disabilitata offline con motivazione; il resto dell'app resta pienamente operativo.
 6. **Installabilità** — iOS: "Aggiungi alla schermata Home" (+ meta `apple-mobile-web-app-*`); Android/desktop: manifest + SW bastano per il prompt del browser.
 
-## 4. Decisioni aperte — ⚠️ da validare con Lorenzo
+## 4. Decisioni — ✅ SCIOLTE con Lorenzo (2026-07-09)
 
-| # | Tema | Opzioni | Raccomandazione |
-|---|------|---------|-----------------|
-| A | **Cache dei tile CARTO** | (1) nessuna cache: offline = zone su sfondo neutro · (2) runtime cache limitata (es. max 300 tile, TTL 7 gg, solo zoom bassi) | **Opzione 1** per partire: i TOS del basemap free CARTO scoraggiano il caching massivo; le zone restano leggibili su sfondo neutro e il verdetto non dipende dai tile. L'opzione 2 si può aggiungere dopo, come miglioria consapevole. |
-| B | **vite-plugin-pwa (Workbox) vs SW scritto a mano** | plugin = precache manifest automatico, meno codice · SW manuale = zero dipendenze, pieno controllo, logica testabile con Vitest | **Spike nel Task 1 del piano**: il plugin va verificato contro rolldown-vite (Vite 8); se builda e genera il precache corretto si usa il plugin, altrimenti SW manuale con lista asset generata da un mini-script post-build. |
-| C | **Bottone "Installa app" custom** (`beforeinstallprompt`, solo Chromium) | sì / no | **No** per minimalismo: si lascia il prompt nativo del browser; su iOS comunque non esiste. |
-| D | **Icona PWA** | generare png 192/512/maskable dal `favicon.svg` esistente vs disegno nuovo | Generazione dal favicon esistente (coerente con l'estetica attuale); i png vengono committati, niente step di build extra. |
+| # | Tema | Decisione |
+|---|------|-----------|
+| A | **Cache dei tile CARTO** | **Nessuna cache tile**: offline = zone su sfondo neutro. I TOS del basemap free CARTO scoraggiano il caching massivo; il verdetto non dipende dai tile. La cache limitata resta possibile miglioria futura. |
+| B | **vite-plugin-pwa (Workbox) vs SW scritto a mano** | Spike con criterio oggettivo — **ESEGUITO il 2026-07-09 durante la scrittura del piano, esito: PLUGIN.** `vite-plugin-pwa@1.3.0` builda pulito su rolldown-vite 8, precache corretto (8 entry, chunk `maplibre-*` incluso, URL relativi allo scope), `navigateFallback: index.html`, e shell servita **davvero offline** in un test Playwright (`setOffline(true)` → reload → app renderizza). Il piano contiene solo la variante plugin. |
+| C | **Bottone "Installa app" custom** (`beforeinstallprompt`, solo Chromium) | **No**: si lascia il prompt nativo del browser; su iOS comunque non esiste. |
+| D | **Icona PWA** | **Disegno NUOVO** (scelta di Lorenzo, diversa dalla raccomandazione). **Design approvato il 2026-07-09: proposta "B — Zona sulla mappa"** (mappa notturna stilizzata blu navy, zona circolare rossa ED-269 semitrasparente con bordo, quadricottero bianco geometrico sopra; drone dentro la zona sicura maskable). Dall'SVG master si generano i png 192/512/maskable-512/apple-touch-180, committati in `public/icons/` — niente step di build extra. |
 
 ## 5. Fuori scope Fase 3
 
