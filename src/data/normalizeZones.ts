@@ -1,6 +1,26 @@
 import circle from '@turf/circle';
-import type { Polygon, MultiPolygon } from 'geojson';
+import type { Polygon, MultiPolygon, Position } from 'geojson';
 import type { Ed269Document, Ed269Feature, Ed269Volume, Zone, RestrictionType } from './ed269.types';
+
+/**
+ * Il file D-Flight reale contiene ~28 poligoni con anelli VUOTI o degeneri:
+ * passarli a Turf fa esplodere il calcolo del verdetto (TypeError su ring[0],
+ * bug 2026-07-10). Regole di pulizia, conservative:
+ * - anello valido = array di ≥4 punti finiti;
+ * - anello ESTERNO (indice 0) invalido → il poligono intero non esiste
+ *   (i buchi successivi non possono promuoversi a esterno);
+ * - BUCO invalido → si scarta solo il buco (la zona si allarga: conservativo);
+ * - MultiPolygon → si tengono i poligoni sopravvissuti; zero sopravvissuti = null.
+ */
+function validRing(r: unknown): r is Position[] {
+  return Array.isArray(r) && r.length >= 4 &&
+    r.every((p: unknown) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+}
+
+function cleanPolygonCoords(coords: unknown): Position[][] | null {
+  if (!Array.isArray(coords) || !validRing(coords[0])) return null;
+  return [coords[0], ...coords.slice(1).filter(validRing)];
+}
 
 const RESTRICTION: Record<string, RestrictionType> = {
   PROHIBITED: 'prohibited',
@@ -17,8 +37,16 @@ function toMeters(v: number | undefined, uom?: string): number | null {
 function geometryOf(vol: Ed269Volume | undefined, uom?: string): Polygon | MultiPolygon | null {
   const hp = vol?.horizontalProjection;
   if (!hp) return null;
-  if (hp.type === 'Polygon') return { type: 'Polygon', coordinates: hp.coordinates };
-  if (hp.type === 'MultiPolygon') return { type: 'MultiPolygon', coordinates: hp.coordinates };
+  if (hp.type === 'Polygon') {
+    const coordinates = cleanPolygonCoords(hp.coordinates);
+    return coordinates ? { type: 'Polygon', coordinates } : null;
+  }
+  if (hp.type === 'MultiPolygon') {
+    const coordinates = (Array.isArray(hp.coordinates) ? hp.coordinates : [])
+      .map(cleanPolygonCoords)
+      .filter((p: Position[][] | null): p is Position[][] => p !== null);
+    return coordinates.length ? { type: 'MultiPolygon', coordinates } : null;
+  }
   if (hp.type === 'Circle' && Array.isArray(hp.center) && typeof hp.radius === 'number') {
     const radiusKm = (uom === 'FT' ? hp.radius * 0.3048 : hp.radius) / 1000;
     return circle(hp.center, radiusKm, { steps: 48, units: 'kilometers' }).geometry as Polygon;

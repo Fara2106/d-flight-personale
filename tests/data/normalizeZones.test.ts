@@ -61,3 +61,42 @@ it('zona non permanente senza dettagli → testo generico', () => {
     applicability: [{ permanent: 'NO' }] }] } as any;
   expect(normalizeZones(doc)[0].applicabilityText).toMatch(/orari|finestre/i);
 });
+
+describe('geometrie malformate del file D-Flight reale (28 casi, bug verdetto 2026-07-10)', () => {
+  const poly = (coordinates: unknown) => ({
+    identifier: 'X1', name: 'Rotta', restriction: 'REQ_AUTHORISATION',
+    geometry: [{ horizontalProjection: { type: 'Polygon', coordinates },
+      lowerLimit: 0, upperLimit: 120, upperVerticalReference: 'AGL', uomDimensions: 'M' }],
+  });
+
+  it('anello VUOTO come buco: buco scartato, anello esterno tenuto', () => {
+    const z = normalizeZones({ features: [poly(
+      [[[10, 42], [11, 42], [11, 43], [10, 42]], []],
+    )] } as Ed269Document);
+    expect(z).toHaveLength(1);
+    expect((z[0].geometry as { coordinates: unknown[][] }).coordinates).toHaveLength(1);
+  });
+
+  it('anello esterno vuoto: zona scartata (nessuna geometria utilizzabile)', () => {
+    const z = normalizeZones({ features: [poly([[]])] } as Ed269Document);
+    expect(z).toHaveLength(0);
+  });
+
+  it('anello con punto non finito: scartato', () => {
+    const z = normalizeZones({ features: [poly(
+      [[[10, 42], [Number.NaN, 42], [11, 43], [10, 42]]],
+    )] } as Ed269Document);
+    expect(z).toHaveLength(0);
+  });
+
+  it('MultiPolygon: poligono vuoto scartato, quello valido resta', () => {
+    const f = poly(null) as Record<string, unknown>;
+    (f.geometry as Array<{ horizontalProjection: unknown }>)[0].horizontalProjection = {
+      type: 'MultiPolygon',
+      coordinates: [ [[]], [[[10, 42], [11, 42], [11, 43], [10, 42]]] ],
+    };
+    const z = normalizeZones({ features: [f] } as unknown as Ed269Document);
+    expect(z).toHaveLength(1);
+    expect((z[0].geometry as { coordinates: unknown[] }).coordinates).toHaveLength(1);
+  });
+});

@@ -86,5 +86,9 @@ body { background: var(--bg); color: var(--text);
 /* Controlli MapLibre (zoom in alto a destra, attribution in basso) dentro le
    safe area; :root per vincere su maplibre-gl.css (gotcha cascata, v. popup) */
 :root .maplibregl-ctrl-top-right { top: var(--safe-top); right: var(--safe-right); }
+/* su mobile i +/− si sovrappongono al selettore tema e lo zoom lo fa il pinch */
+@media (max-width: 640px) {
+  :root .maplibregl-ctrl-top-right { display: none; }
+}
 :root .maplibregl-ctrl-bottom-right { bottom: var(--safe-bottom); right: var(--safe-right); }
 :root .maplibregl-ctrl-bottom-left { bottom: var(--safe-bottom); left: var(--safe-left); }

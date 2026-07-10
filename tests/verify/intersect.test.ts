@@ -37,3 +37,12 @@ it('multi-zona sovrapposte: le ritorna tutte, in ordine di input', () => {
   const hit = zonesAtPoint(zs, { lat: 0.0015, lon: 0.0015, radiusM: 0 });
   expect(hit.map(z => z.id)).toEqual(['a', 'b']);
 });
+
+it('zona con geometria rotta (vecchi import in IndexedDB) non fa crashare il verdetto', () => {
+  const broken: Zone = { ...square('rotta'),
+    geometry: { type: 'Polygon', coordinates: [[[10, 42], [11, 42], [11, 43], [10, 42]], []] } };
+  const valid: Zone = { ...square('ok2'),
+    geometry: { type: 'Polygon', coordinates: [[[12, 41], [13, 41], [13, 42], [12, 41]]] } };
+  const hit = zonesAtPoint([broken, valid], { lat: 41.5, lon: 12.5, radiusM: 0 });
+  expect(hit.map((z) => z.id)).toEqual(['ok2']);
+});

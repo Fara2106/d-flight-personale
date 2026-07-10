@@ -85,7 +85,9 @@ export default function App() {
       </div>
 
       <div style={{ position:'absolute', bottom:'calc(var(--safe-bottom) + 12px)',
-        left:'calc(var(--safe-left) + 12px)', display:'flex', flexDirection:'column', gap:10 }}>
+        left:'calc(var(--safe-left) + 12px)', display:'flex', flexDirection:'column', gap:10,
+        // su mobile lascia respiro alla colonna pulsanti di destra
+        maxWidth:'calc(100vw - 140px)', alignItems:'flex-start' }}>
         {!online && <OfflineBanner />}
         <DataStatusBanner meta={meta} />
         <Legend />

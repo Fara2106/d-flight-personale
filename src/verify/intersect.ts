@@ -11,5 +11,15 @@ export function zonesAtPoint(zones: Zone[], p: VerifyPoint): Zone[] {
   const probe = p.radiusM > 0
     ? circle([p.lon, p.lat], p.radiusM / 1000, { steps: 64, units: 'kilometers' })
     : point([p.lon, p.lat]);
-  return zones.filter(z => booleanIntersects(probe, feature(z.geometry)));
+  return zones.filter(z => {
+    try {
+      return booleanIntersects(probe, feature(z.geometry));
+    } catch {
+      // geometria rotta (es. anello vuoto nei vecchi import in IndexedDB):
+      // una zona illeggibile per Turf non è verificabile, ma non deve
+      // uccidere il verdetto delle altre. I nuovi import la ripuliscono a
+      // monte (normalizeZones).
+      return false;
+    }
+  });
 }

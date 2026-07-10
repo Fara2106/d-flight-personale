@@ -127,8 +127,12 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   void zonesToUnionGeoJSONAsync(zones).then((renderData) => {
     // scarta il risultato se nel frattempo è arrivato un nuovo import
     if (gen !== unionGeneration) return;
-    const src = map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource | undefined;
-    src?.setData(renderData as any);
+    try {
+      const src = map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource | undefined;
+      src?.setData(renderData as any);
+    } catch {
+      // la mappa può essere stata rimossa (unmount) mentre l'union girava
+    }
   });
   if (map.getSource(SRC)) {
     (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
