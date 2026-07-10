@@ -1,6 +1,9 @@
-import type { FeatureCollection, Geometry, Position } from 'geojson';
-import type { Zone } from '../data/ed269.types';
+import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon, Position } from 'geojson';
+import { union } from '@turf/union';
+import { featureCollection, feature as toFeature } from '@turf/helpers';
+import type { Zone, RestrictionType } from '../data/ed269.types';
 import { altitudeLabel } from './altitudeLabel';
+import { RESTRICTION_ORDER } from './mapStyle';
 
 /**
  * Area planare approssimata (shoelace sugli anelli esterni, gradi²): serve
@@ -65,4 +68,87 @@ export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
       },
     })),
   };
+}
+
+/**
+ * Sorgente di RENDERING per fill e bordo: le fasce della stessa zona (stesso
+ * nome) vengono FUSE in un solo poligono. Motivo (iPhone 2026-07-09, seconda
+ * segnalazione): anche col dedup di bordi/etichette, i riempimenti delle
+ * fasce sovrapposte si sommano (0.24 × n) e disegnano "gradini" annidati che
+ * sembrano zone dentro zone. Con l'union: un solo velo, un solo contorno.
+ * Le proprietà per popup/highlight/verifica NON stanno qui: restano sulla
+ * sorgente per-fascia (zonesToGeoJSON) usata da etichette, highlight e layer
+ * di hit. `restrictionType` = il più restrittivo del gruppo (conservativo).
+ * Se l'union fallisce su un gruppo (geometrie sporche), quel gruppo torna
+ * alle fasce separate: mai ridurre la copertura visiva.
+ */
+function groupByName(zones: Zone[]): Map<string, Zone[]> {
+  const groups = new Map<string, Zone[]>();
+  for (const z of zones) {
+    const g = groups.get(z.name);
+    if (g) g.push(z); else groups.set(z.name, [z]);
+  }
+  return groups;
+}
+
+function unionGroup(name: string, group: Zone[]): Feature[] {
+  const worst = group.reduce((a, b) =>
+    RESTRICTION_ORDER[b.restrictionType] < RESTRICTION_ORDER[a.restrictionType] ? b : a);
+  const props = {
+    name,
+    restrictionType: worst.restrictionType as RestrictionType,
+    bandPrimary: true, // bordo pieno con la stessa paint della sorgente per-fascia
+  };
+  // le fasce D-Flight arrivano spesso in coppie con geometria IDENTICA:
+  // deduplicarle prima dimezza il costo dell'union (−40% sul file reale)
+  const seen = new Set<string>();
+  const uniq = group.filter((z) => {
+    const k = JSON.stringify((z.geometry as Polygon | MultiPolygon).coordinates ?? z.geometry);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  let merged: Geometry | null = uniq.length === 1 ? uniq[0].geometry : null;
+  if (!merged) {
+    try {
+      const polys = uniq
+        .map((z) => z.geometry)
+        .filter((g): g is Polygon | MultiPolygon =>
+          g.type === 'Polygon' || g.type === 'MultiPolygon')
+        .map((g) => toFeature(g));
+      merged = polys.length > 1
+        ? (union(featureCollection(polys))?.geometry ?? null)
+        : (polys[0]?.geometry ?? null);
+    } catch {
+      merged = null;
+    }
+  }
+  if (merged) return [{ type: 'Feature', geometry: merged, properties: props }];
+  // fallback: fasce separate (copertura visiva intatta)
+  return group.map((z) => ({ type: 'Feature', geometry: z.geometry, properties: props }));
+}
+
+export function zonesToUnionGeoJSON(zones: Zone[]): FeatureCollection {
+  const features: Feature[] = [];
+  for (const [name, group] of groupByName(zones)) features.push(...unionGroup(name, group));
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Come zonesToUnionGeoJSON ma cede il main thread ogni ~25ms: sul file
+ * D-Flight reale l'union totale costa ~2s e girava tutta in un colpo solo
+ * bloccherebbe l'avvio. MapView dipinge subito le fasce e sostituisce la
+ * sorgente quando questo risultato arriva.
+ */
+export async function zonesToUnionGeoJSONAsync(zones: Zone[]): Promise<FeatureCollection> {
+  const features: Feature[] = [];
+  let sliceStart = Date.now();
+  for (const [name, group] of groupByName(zones)) {
+    features.push(...unionGroup(name, group));
+    if (Date.now() - sliceStart > 25) {
+      await new Promise((r) => setTimeout(r, 0));
+      sliceStart = Date.now();
+    }
+  }
+  return { type: 'FeatureCollection', features };
 }

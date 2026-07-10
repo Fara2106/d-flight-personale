@@ -5,7 +5,7 @@ import {
   mapStyleUrl, ITALY_CENTER, ITALY_ZOOM,
   ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
 } from './mapStyle';
-import { zonesToGeoJSON } from './zonesToGeoJSON';
+import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
 import { circleFeature } from '../verify/verifyLayers';
 import { warmVisibleTiles, type TileViewState } from '../pwa/warmMapCache';
@@ -14,6 +14,7 @@ import type { GeoPosition } from '../location/useGeolocation';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
+const SRC_RENDER = 'zones-render';
 
 /** Vista corrente per il warm dei tile: template CARTO + zoom + bounds. */
 function tileViewState(m: maplibregl.Map): TileViewState {
@@ -115,14 +116,35 @@ function setVerifyLayers(map: maplibregl.Map, verify: VerifyState | null) {
   }
 }
 
+let unionGeneration = 0;
+
 function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string | null) {
   const data = zonesToGeoJSON(zones) as any;
-  if (map.getSource(SRC)) { (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data); return; }
+  // fill/bordo useranno le fasce FUSE per zona (niente gradini di opacità né
+  // bordi annidati): l'union sul file reale costa ~2s, quindi si parte con le
+  // fasce così come sono e si sostituisce la sorgente quando l'union è pronta
+  const gen = ++unionGeneration;
+  void zonesToUnionGeoJSONAsync(zones).then((renderData) => {
+    // scarta il risultato se nel frattempo è arrivato un nuovo import
+    if (gen !== unionGeneration) return;
+    const src = map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource | undefined;
+    src?.setData(renderData as any);
+  });
+  if (map.getSource(SRC)) {
+    (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
+    (map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource).setData(data);
+    return;
+  }
   map.addSource(SRC, { type: 'geojson', data });
-  map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC,
+  map.addSource(SRC_RENDER, { type: 'geojson', data });
+  map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC_RENDER,
     layout: buildFillLayout(), paint: buildFillPaint() });
-  map.addLayer({ id: 'zones-line', type: 'line', source: SRC,
+  map.addLayer({ id: 'zones-line', type: 'line', source: SRC_RENDER,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() });
+  // layer di hit trasparente sulle FASCE: il popup ha bisogno delle proprietà
+  // per-fascia (quote, message, reasons) che la sorgente fusa non ha
+  map.addLayer({ id: 'zones-hit', type: 'fill', source: SRC,
+    paint: { 'fill-color': '#000000', 'fill-opacity': 0 } });
   // velo + bordo blu sulla zona aperta nell'accordion: emerge dalla pila
   map.addLayer({ id: 'zones-highlight-fill', type: 'fill', source: SRC,
     filter: highlightFilter(highlightId),
@@ -176,7 +198,7 @@ export function MapView(
     m.on('click', (e) => {
       if (verifyRef.current) onVerifyPickRef.current?.(e.lngLat.lat, e.lngLat.lng);
     });
-    m.on('click', 'zones-fill', (e) => {
+    m.on('click', 'zones-hit', (e) => {
       if (verifyRef.current) return;
       const feats = e.features ?? [];
       if (feats.length === 0) return;
@@ -189,8 +211,8 @@ export function MapView(
         .addTo(m);
       popup.on('close', () => onZoneFocusRef.current?.(null));
     });
-    m.on('mouseenter', 'zones-fill', () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', 'zones-fill', () => { m.getCanvas().style.cursor = ''; });
+    m.on('mouseenter', 'zones-hit', () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', 'zones-hit', () => { m.getCanvas().style.cursor = ''; });
     return () => { m.remove(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
