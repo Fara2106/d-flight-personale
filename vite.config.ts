@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -6,9 +7,19 @@ import { VitePWA } from 'vite-plugin-pwa';
 // (module: nodenext) che la richiede; allowImportingTsExtensions la permette
 import { MAP_STYLE_URL_RE, MAP_TILE_URL_RE } from './src/pwa/mapStyleCache.ts';
 
+// identifica la build nel DOM (data-build su App): VITE_BUILD_ID esplicito
+// (E2E offline.mjs), altrimenti lo SHA git — così anche in prod si può
+// verificare quale build è live (hook E2E post-deploy)
+function buildId(): string {
+  if (process.env.VITE_BUILD_ID) return process.env.VITE_BUILD_ID;
+  try { return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); }
+  catch { return new Date().toISOString(); }
+}
+
 export default defineConfig({
   // GitHub Pages serve l'app da https://<user>.github.io/d-flight-personale/
   base: '/d-flight-personale/',
+  define: { 'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId()) },
   plugins: [
     react(),
     VitePWA({
@@ -33,7 +44,12 @@ export default defineConfig({
             // stile mappa CARTO (style/glyphs/sprite/tiles.json) — MAI i tile
             urlPattern: MAP_STYLE_URL_RE,
             handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'carto-style-v1', expiration: { maxEntries: 80 } },
+            // maxAgeSeconds: SWR riaggiorna da solo a ogni visita online, il TTL
+            // serve solo a far scadere voci di sessioni mai più rivisitate
+            options: {
+              cacheName: 'carto-style-v1',
+              expiration: { maxEntries: 80, maxAgeSeconds: 30 * 24 * 60 * 60, purgeOnQuotaError: true },
+            },
           },
           {
             // tile vettoriali: cache limitata CacheFirst (decisione A rivista) —

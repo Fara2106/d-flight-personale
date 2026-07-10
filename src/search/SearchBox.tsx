@@ -1,9 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { geocode, type GeocodeResult } from './geocode';
 export function SearchBox({ onPick, disabled = false }:
   { onPick: (r: GeocodeResult) => void; disabled?: boolean }) {
   const [q, setQ] = useState(''); const [res, setRes] = useState<GeocodeResult[]>([]);
   const controllerRef = useRef<AbortController | null>(null);
+  // si va offline col dropdown aperto: chiudi la lista e ferma la richiesta in volo
+  useEffect(() => {
+    if (disabled) { controllerRef.current?.abort(); controllerRef.current = null; setRes([]); }
+  }, [disabled]);
   async function run(v: string) {
     setQ(v);
     controllerRef.current?.abort();
@@ -14,7 +18,8 @@ export function SearchBox({ onPick, disabled = false }:
       const r = await geocode(v, controller.signal);
       if (!controller.signal.aborted) setRes(r);
     } catch (err) {
-      if ((err as { name?: string }).name !== 'AbortError') throw err;
+      // rete giù con navigator.onLine ancora true: nessun risultato, niente crash
+      if ((err as { name?: string }).name !== 'AbortError' && !controller.signal.aborted) setRes([]);
     }
   }
   return (

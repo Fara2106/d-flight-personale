@@ -20,20 +20,29 @@ function build(env = {}) {
   if (r.status !== 0) throw new Error('build fallita');
 }
 
-// 1. build A + preview
+// aspetta che MapLibre abbia finito di caricare e disegnare (data-map-idle,
+// vedi src/map/mapIdleFlag.ts) — niente sleep fissi prima dei click a pixel
+async function waitMapIdle(page) {
+  await page.waitForSelector('[data-map-idle]', { state: 'detached', timeout: 3000 }).catch(() => {});
+  await page.waitForSelector('[data-map-idle]', { state: 'attached', timeout: 20000 });
+}
+
+// 1. build A + preview — da qui in poi tutto nel try: il finally chiude
+// sempre server e browser anche se il launch o l'avvio falliscono
 build();
 const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'],
   { cwd: root, stdio: 'pipe' });
-await new Promise((res, rej) => {
-  const t = setTimeout(() => rej(new Error('vite preview non parte')), 20000);
-  server.stdout.on('data', d => { if (String(d).includes('Local:')) { clearTimeout(t); res(); } });
-});
-
-const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-const page = await context.newPage();
-
+let browser;
 try {
+  await new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error('vite preview non parte')), 20000);
+    server.stdout.on('data', d => { if (String(d).includes('Local:')) { clearTimeout(t); res(); } });
+  });
+
+  browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+
   // 2. prima visita online: fixture + drone (IndexedDB persiste tra i reload)
   await page.goto(BASE);
   await page.getByText(/Importa le zone ufficiali/i).waitFor();
@@ -89,7 +98,7 @@ try {
   check('offline: ricerca disabilitata', await search.isDisabled());
 
   // 6. offline: verifica + verdetto (tutto locale; i tile falliscono, le zone no)
-  await page.waitForTimeout(2000);
+  await waitMapIdle(page);
   await page.getByRole('button', { name: /^verifica$/i }).click();
   await page.getByText(/tocca un punto sulla mappa/i).waitFor();
   await page.locator('.maplibregl-canvas').click({ position: { x: 640, y: 400 } });
@@ -112,7 +121,7 @@ try {
     { timeout: 20000 });
   check('aggiornamento: reload con la build nuova', true);
 } finally {
-  await browser.close();
+  await browser?.close();
   server.kill();
 }
 

@@ -23,20 +23,31 @@ async function until(fn, timeout = 8000) {
   return false;
 }
 
-// 1. dev server
+// aspetta che MapLibre abbia finito di caricare e disegnare (data-map-idle,
+// vedi src/map/mapIdleFlag.ts) — niente sleep fissi prima dei click a pixel.
+// Prima lascia partire l'eventuale ridisegno in corso (l'attributo cade al
+// primo 'render'); se non cade entro poco, era già tutto fermo.
+async function waitMapIdle(page) {
+  await page.waitForSelector('[data-map-idle]', { state: 'detached', timeout: 3000 }).catch(() => {});
+  await page.waitForSelector('[data-map-idle]', { state: 'attached', timeout: 20000 });
+}
+
+// 1. dev server — da qui in poi tutto nel try: il finally chiude sempre
+// server e browser anche se il launch o l'avvio falliscono
 const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'],
   { cwd: root, stdio: 'pipe' });
-await new Promise((res, rej) => {
-  const t = setTimeout(() => rej(new Error('vite non parte')), 30000);
-  server.stdout.on('data', d => { if (String(d).includes('Local:')) { clearTimeout(t); res(); } });
-});
-
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+let browser;
 const consoleErrors = [];
-page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
-
 try {
+  await new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error('vite non parte')), 30000);
+    server.stdout.on('data', d => { if (String(d).includes('Local:')) { clearTimeout(t); res(); } });
+  });
+
+  browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+
   await page.goto(`http://localhost:${PORT}/`);
 
   // 2. empty state + import fixture
@@ -46,7 +57,7 @@ try {
     .setInputFiles(join(root, 'e2e/fixture-ed269.json'));
   await page.getByText(/Dati aggiornati al/i).waitFor({ timeout: 10000 });
   check('import fixture (banner dataset visibile)', true);
-  await page.waitForTimeout(2500); // rendering mappa
+  await waitMapIdle(page); // zone disegnate prima dei click a pixel
 
   // 3. verifica senza profilo → CTA
   await page.getByRole('button', { name: /^verifica$/i }).click();
@@ -131,7 +142,7 @@ try {
   // prima di cliccare per il popup.
   await page.mouse.move(640, 400);
   for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, -400); await page.waitForTimeout(150); }
-  await page.waitForTimeout(800);
+  await waitMapIdle(page); // fine animazione zoom + tile ridisegnate
   await canvas.click({ position: { x: 640, y: 400 } });
   await page.locator('.zone-popup').waitFor();
   const heads = page.locator('.zone-popup-head');
@@ -143,7 +154,7 @@ try {
   // 12. console pulita
   check('zero errori console', consoleErrors.length === 0, consoleErrors.join(' | '));
 } finally {
-  await browser.close();
+  await browser?.close();
   server.kill();
 }
 

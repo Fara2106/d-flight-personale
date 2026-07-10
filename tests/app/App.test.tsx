@@ -19,6 +19,13 @@ it('bottone Verifica disabilitato senza zone', async () => {
   expect(btn).toBeDisabled();
 });
 
+it('espone un data-build non vuoto anche senza VITE_BUILD_ID esplicito (hook E2E/prod)', async () => {
+  const { container } = render(<App />);
+  const root = container.querySelector('[data-build]');
+  expect(root).not.toBeNull();
+  expect(root!.getAttribute('data-build')).not.toBe('');
+});
+
 it('bottone Profilo apre e chiude il pannello', async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole('button', { name: /^profilo$/i }));

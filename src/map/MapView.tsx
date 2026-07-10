@@ -7,6 +7,7 @@ import {
 } from './mapStyle';
 import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
+import { wireMapIdleFlag } from './mapIdleFlag';
 import { circleFeature } from '../verify/verifyLayers';
 import { warmVisibleTiles, type TileViewState } from '../pwa/warmMapCache';
 import { MAP_TILE_URL_RE } from '../pwa/mapStyleCache';
@@ -192,6 +193,7 @@ export function MapView(
       center: ITALY_CENTER, zoom: ITALY_ZOOM, attributionControl: { compact: true },
     });
     map.current = m;
+    wireMapIdleFlag(m, el.current);
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
     // sfondo mappa offline: in prima sessione i worker MapLibre bypassano il
