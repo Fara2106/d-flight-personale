@@ -1,8 +1,10 @@
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon, Position } from 'geojson';
 import { union } from '@turf/union';
+import { difference } from '@turf/difference';
 import { featureCollection, feature as toFeature } from '@turf/helpers';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 import { altitudeLabel } from './altitudeLabel';
+import { categoryAltitudes } from '../data/categoryAltitudes';
 import { RESTRICTION_ORDER } from './mapStyle';
 
 /**
@@ -36,6 +38,12 @@ function approxArea(g: Geometry): number {
 export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
   const areas = zones.map((z) => approxArea(z.geometry));
   const labels = zones.map((z) => altitudeLabel(z));
+  // etichetta-quota solo dove differisce dalla quota tipica della categoria
+  // (la quota standard sta in legenda); AMSL/WGS84 sempre etichettate
+  const typical = categoryAltitudes(zones);
+  const differs = (z: Zone) =>
+    z.verticalRef === 'AMSL' || z.verticalRef === 'WGS84' ||
+    z.upperLimitM !== typical[z.restrictionType].modeM;
   const largestBy = (key: (i: number) => string) => {
     const best = new Map<string, number>();
     zones.forEach((_, i) => {
@@ -65,6 +73,7 @@ export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
         applicabilityText: z.applicabilityText ?? null,
         bandPrimary: primaryByName.get(z.name) === i,
         labelPrimary: primaryByNameLabel.get(`${z.name} ${labels[i]}`) === i,
+        labelDiffers: differs(z),
       },
     })),
   };
@@ -149,6 +158,74 @@ export async function zonesToUnionGeoJSONAsync(zones: Zone[]): Promise<FeatureCo
       await new Promise((r) => setTimeout(r, 0));
       sliceStart = Date.now();
     }
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Vista d'INSIEME per gli zoom bassi (caso Fiumicino, 2026-07-10): tutte le
+ * zone di una categoria fuse in un solo poligono → un solo velo di colore e
+ * un solo bordo esterno per categoria, invece della ragnatela di decine di
+ * zone sovrapposte. Union incrementale a batch con yield del main thread.
+ * Fallback conservativo per batch: se un'union fallisce, le geometrie di quel
+ * batch restano feature separate (mai ridurre la copertura visiva).
+ */
+export async function zonesToCategoryUnionAsync(zones: Zone[]): Promise<FeatureCollection> {
+  const features: Feature[] = [];
+  let prohibitedUnion: Feature<Polygon | MultiPolygon> | null = null;
+  const byType = new Map<RestrictionType, Zone[]>();
+  for (const z of zones) {
+    const g = byType.get(z.restrictionType);
+    if (g) g.push(z); else byType.set(z.restrictionType, [z]);
+  }
+  // prohibited per prima: la sua geometria fusa viene SOTTRATTA dalle altre
+  // categorie, così il rosso resta l'unico colore dove c'è divieto
+  const ordered = [...byType.entries()].sort(([a], [b]) =>
+    RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
+  for (const [type, group] of ordered) {
+    const props = { restrictionType: type, catUnion: true };
+    // dedup geometrie identiche (doppioni D-Flight): meno lavoro per l'union
+    const seen = new Set<string>();
+    const geoms = group
+      .map((z) => z.geometry)
+      .filter((g): g is Polygon | MultiPolygon =>
+        g.type === 'Polygon' || g.type === 'MultiPolygon')
+      .filter((g) => {
+        const k = JSON.stringify(g.coordinates);
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    if (geoms.length === 0) continue;
+    let acc: Feature<Polygon | MultiPolygon> | null = null;
+    const BATCH = 16;
+    for (let i = 0; i < geoms.length; i += BATCH) {
+      const batch = geoms.slice(i, i + BATCH).map((g) => toFeature(g));
+      try {
+        const parts: Feature<Polygon | MultiPolygon>[] = acc ? [acc, ...batch] : batch;
+        acc = parts.length > 1
+          ? (union(featureCollection(parts)) as Feature<Polygon | MultiPolygon> | null)
+          : parts[0];
+        if (!acc) throw new Error('union nulla');
+      } catch {
+        // batch indigesto: emetti l'accumulato e le geometrie così come sono
+        if (acc) features.push({ type: 'Feature', geometry: acc.geometry, properties: props });
+        for (const g of geoms.slice(i, i + BATCH)) {
+          features.push({ type: 'Feature', geometry: g, properties: props });
+        }
+        acc = null;
+      }
+      await new Promise((r) => setTimeout(r, 0)); // cedi il main thread tra i batch
+    }
+    if (acc && type === 'prohibited') prohibitedUnion = acc;
+    if (acc && type !== 'prohibited' && prohibitedUnion) {
+      // il divieto buca le categorie meno severe (fallimenti → geometria intera)
+      try {
+        const cut = difference(featureCollection([acc, prohibitedUnion]));
+        acc = (cut as Feature<Polygon | MultiPolygon> | null) ?? acc;
+      } catch { /* conservativo: meglio un velo doppio che un buco */ }
+    }
+    if (acc) features.push({ type: 'Feature', geometry: acc.geometry, properties: props });
   }
   return { type: 'FeatureCollection', features };
 }

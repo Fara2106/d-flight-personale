@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { zonesToGeoJSON, zonesToUnionGeoJSON, zonesToUnionGeoJSONAsync } from '../../src/map/zonesToGeoJSON';
+import {
+  zonesToGeoJSON, zonesToUnionGeoJSON, zonesToUnionGeoJSONAsync,
+  zonesToCategoryUnionAsync,
+} from '../../src/map/zonesToGeoJSON';
 import type { Zone } from '../../src/data/ed269.types';
 
 const z: Zone = {
@@ -150,5 +153,97 @@ describe('zonesToUnionGeoJSON: performance sul file reale (dedupe + async)', () 
     const sync = zonesToUnionGeoJSON(zones);
     const async_ = await zonesToUnionGeoJSONAsync(zones);
     expect(async_).toEqual(sync);
+  });
+});
+
+describe('labelDiffers: etichetta-quota solo dove serve (caso Fiumicino, 2026-07-10)', () => {
+  const auth = (id: string, upper: number, over: Partial<Zone> = {}): Zone => ({
+    ...z, id, name: `R_${id}`, restrictionType: 'auth_required', upperLimitM: upper,
+    ...over,
+  });
+
+  it('quota uguale alla moda della categoria → labelDiffers false (va in legenda, non sulla mappa)', () => {
+    const fc = zonesToGeoJSON([auth('a', 120), auth('b', 120), auth('c', 120), auth('d', 60)]);
+    const byId = Object.fromEntries(fc.features.map((f) => [f.properties?.id, f.properties]));
+    expect(byId.a?.labelDiffers).toBe(false);
+    expect(byId.d?.labelDiffers).toBe(true); // 60 ≠ moda 120: eccezione, resta etichettata
+  });
+
+  it('quote AMSL: sempre etichettate (mai nascondere un riferimento non-suolo)', () => {
+    const fc = zonesToGeoJSON([auth('a', 120), auth('b', 120),
+      auth('amsl', 120, { verticalRef: 'AMSL' })]);
+    const byId = Object.fromEntries(fc.features.map((f) => [f.properties?.id, f.properties]));
+    expect(byId.amsl?.labelDiffers).toBe(true);
+  });
+
+  it('la moda è per-categoria: 60 m standard dei conditional non etichettato, 60 m tra gli auth sì', () => {
+    const fc = zonesToGeoJSON([
+      auth('a1', 120), auth('a2', 120), auth('a3', 60),
+      auth('c1', 60, { restrictionType: 'conditional' }),
+      auth('c2', 60, { restrictionType: 'conditional' }),
+    ]);
+    const byId = Object.fromEntries(fc.features.map((f) => [f.properties?.id, f.properties]));
+    expect(byId.a3?.labelDiffers).toBe(true);
+    expect(byId.c1?.labelDiffers).toBe(false);
+  });
+});
+
+describe('zonesToCategoryUnionAsync: vista d\'insieme per categoria (zoom bassi)', () => {
+  const rect = (id: string, name: string, x0: number, x1: number,
+    over: Partial<Zone> = {}): Zone => ({
+    ...z, id, name,
+    geometry: { type: 'Polygon',
+      coordinates: [[[x0, 0], [x1, 0], [x1, 1], [x0, 1], [x0, 0]]] },
+    ...over,
+  });
+
+  it('zone sovrapposte della STESSA categoria → una sola feature per categoria', async () => {
+    const fc = await zonesToCategoryUnionAsync([
+      rect('a', 'Uno', 0, 2, { restrictionType: 'auth_required' }),
+      rect('b', 'Due', 1, 3, { restrictionType: 'auth_required' }),
+      rect('c', 'Tre', 2.5, 4, { restrictionType: 'auth_required' }),
+    ]);
+    expect(fc.features).toHaveLength(1);
+    expect(fc.features[0].properties?.restrictionType).toBe('auth_required');
+    const xs = (fc.features[0].geometry as { coordinates: number[][][] })
+      .coordinates.flat(1).map((c) => c[0]);
+    expect(Math.min(...xs)).toBe(0);
+    expect(Math.max(...xs)).toBe(4);
+  });
+
+  it('categorie diverse restano feature separate (il rosso resta rosso)', async () => {
+    const fc = await zonesToCategoryUnionAsync([
+      rect('a', 'Uno', 0, 2, { restrictionType: 'auth_required' }),
+      rect('p', 'Divieto', 1, 1.5, { restrictionType: 'prohibited' }),
+    ]);
+    expect(fc.features).toHaveLength(2);
+    const types = fc.features.map((f) => f.properties?.restrictionType).sort();
+    expect(types).toEqual(['auth_required', 'prohibited']);
+  });
+
+  it('geometrie identiche dedupate prima dell\'union (doppioni D-Flight)', async () => {
+    const fc = await zonesToCategoryUnionAsync([
+      rect('a', 'Uno', 0, 2), rect('b', 'Due', 0, 2),
+    ]);
+    expect(fc.features).toHaveLength(1);
+  });
+
+  it('il rosso resta pulito: l\'area vietata è SOTTRATTA dalle altre categorie', async () => {
+    const { default: booleanIntersects } = await import('@turf/boolean-intersects');
+    const fc = await zonesToCategoryUnionAsync([
+      rect('a', 'Autorizzazione', 0, 4, { restrictionType: 'auth_required' }),
+      rect('p', 'Divieto', 1, 2, { restrictionType: 'prohibited' }),
+    ]);
+    const auth = fc.features.find((f) => f.properties?.restrictionType === 'auth_required')!;
+    expect(auth).toBeDefined();
+    const probe = (x0: number, x1: number) => ({
+      type: 'Feature' as const, properties: {},
+      geometry: { type: 'Polygon' as const,
+        coordinates: [[[x0, 0.4], [x1, 0.4], [x1, 0.6], [x0, 0.6], [x0, 0.4]]] },
+    });
+    // dentro il divieto: l'arancio non c'è più; fuori: c'è ancora
+    expect(booleanIntersects(probe(1.3, 1.7), auth as never)).toBe(false);
+    expect(booleanIntersects(probe(0.2, 0.6), auth as never)).toBe(true);
+    expect(booleanIntersects(probe(2.4, 2.8), auth as never)).toBe(true);
   });
 });

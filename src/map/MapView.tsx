@@ -4,8 +4,11 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   mapStyleUrl, ITALY_CENTER, ITALY_ZOOM,
   ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
+  ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM,
 } from './mapStyle';
-import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
+import {
+  zonesToGeoJSON, zonesToUnionGeoJSONAsync, zonesToCategoryUnionAsync,
+} from './zonesToGeoJSON';
 import { buildPopupContent } from './popupContent';
 import { wireMapIdleFlag } from './mapIdleFlag';
 import { circleFeature } from '../verify/verifyLayers';
@@ -16,6 +19,39 @@ import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
 const SRC_RENDER = 'zones-render';
+const SRC_CAT = 'zones-cat';
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Tratteggio diagonale stile carta aeronautica per "richiede autorizzazione":
+ *  distingue la categoria anche dove i veli si sovrappongono, senza spegnere
+ *  la mappa. Rigenerato a ogni cambio stile (le immagini non sopravvivono a
+ *  setStyle). */
+export function hatchImage(hex: string, size = 16): { width: number; height: number; data: Uint8Array } {
+  const [r, g, b] = hexToRgb(hex);
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if ((x + y) % size < 2) { // righe diagonali sottili, ben distanziate
+        const i = (y * size + x) * 4;
+        data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 130;
+      }
+    }
+  }
+  return { width: size, height: size, data };
+}
+
+function ensureHatchImage(map: maplibregl.Map) {
+  if (!map.hasImage('zone-hatch')) {
+    map.addImage('zone-hatch', hatchImage(ZONE_COLORS.auth_required), { pixelRatio: 2 });
+  }
+}
+
+const HATCH_FILTER: maplibregl.FilterSpecification =
+  ['==', ['get', 'restrictionType'], 'auth_required'] as maplibregl.FilterSpecification;
 
 /** Vista corrente per il warm dei tile: template CARTO + zoom + bounds. */
 function tileViewState(m: maplibregl.Map): TileViewState {
@@ -82,9 +118,28 @@ export function buildLinePaint(): maplibregl.LineLayerSpecification['paint'] {
   };
 }
 
-/** Etichetta quota: una per (zona, quota) — sulla fascia più estesa. */
-export function labelPrimaryFilter(): maplibregl.FilterSpecification {
-  return ['==', ['get', 'labelPrimary'], true] as maplibregl.FilterSpecification;
+/** Bordo della vista d'insieme: un solo contorno netto per categoria. */
+export function buildCatLinePaint(): maplibregl.LineLayerSpecification['paint'] {
+  return {
+    'line-color': zoneColorExpr(),
+    'line-width': matchByType(ZONE_LINE_WIDTH, 1.2),
+    'line-opacity': 0.95,
+  };
+}
+
+/** Etichette-eccezione: quota diversa dalla tipica di categoria (o non-AGL).
+ *  La quota standard sta in legenda, non tappezzata sulla mappa. */
+export function labelDiffFilter(): maplibregl.FilterSpecification {
+  return ['all',
+    ['==', ['get', 'labelPrimary'], true],
+    ['==', ['get', 'labelDiffers'], true]] as maplibregl.FilterSpecification;
+}
+
+/** Etichette con quota standard: solo alla scala di dettaglio fine. */
+export function labelStandardFilter(): maplibregl.FilterSpecification {
+  return ['all',
+    ['==', ['get', 'labelPrimary'], true],
+    ['!=', ['get', 'labelDiffers'], true]] as maplibregl.FilterSpecification;
 }
 
 /** Etichette quota: in collisione tra zone impilate vince la più restrittiva. */
@@ -121,33 +176,61 @@ let unionGeneration = 0;
 
 function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string | null) {
   const data = zonesToGeoJSON(zones) as any;
-  // fill/bordo useranno le fasce FUSE per zona (niente gradini di opacità né
-  // bordi annidati): l'union sul file reale costa ~2s, quindi si parte con le
-  // fasce così come sono e si sostituisce la sorgente quando l'union è pronta
+  // fill/bordo useranno geometrie FUSE (per zona alla scala di dettaglio, per
+  // CATEGORIA nella vista d'insieme — caso Fiumicino): le union costano sul
+  // file reale, quindi si parte con le fasce così come sono e si sostituiscono
+  // le sorgenti quando i risultati arrivano
   const gen = ++unionGeneration;
-  void zonesToUnionGeoJSONAsync(zones).then((renderData) => {
-    // scarta il risultato se nel frattempo è arrivato un nuovo import
-    if (gen !== unionGeneration) return;
-    try {
-      const src = map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource | undefined;
-      src?.setData(renderData as any);
-    } catch {
-      // la mappa può essere stata rimossa (unmount) mentre l'union girava
-    }
-  });
+  const swapWhenReady = (sourceId: string, promise: Promise<unknown>) => {
+    void promise.then((result) => {
+      // scarta il risultato se nel frattempo è arrivato un nuovo import
+      if (gen !== unionGeneration) return;
+      try {
+        const src = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+        src?.setData(result as any);
+      } catch {
+        // la mappa può essere stata rimossa (unmount) mentre l'union girava
+      }
+    });
+  };
+  swapWhenReady(SRC_RENDER, zonesToUnionGeoJSONAsync(zones));
+  swapWhenReady(SRC_CAT, zonesToCategoryUnionAsync(zones));
   if (map.getSource(SRC)) {
     (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
     (map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource).setData(data);
+    (map.getSource(SRC_CAT) as maplibregl.GeoJSONSource).setData(data);
     return;
   }
+  ensureHatchImage(map);
   map.addSource(SRC, { type: 'geojson', data });
   map.addSource(SRC_RENDER, { type: 'geojson', data });
+  map.addSource(SRC_CAT, { type: 'geojson', data });
+
+  // — vista d'INSIEME (zoom < soglia): categorie fuse, un velo + un bordo
+  map.addLayer({ id: 'zones-cat-fill', type: 'fill', source: SRC_CAT,
+    maxzoom: ZONE_DETAIL_MINZOOM,
+    layout: buildFillLayout(), paint: buildFillPaint() });
+  map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
+    maxzoom: ZONE_DETAIL_MINZOOM,
+    layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() });
+
+  // — DETTAGLIO (zoom ≥ soglia): zone per nome, bordi propri
   map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC_RENDER,
+    minzoom: ZONE_DETAIL_MINZOOM,
     layout: buildFillLayout(), paint: buildFillPaint() });
   map.addLayer({ id: 'zones-line', type: 'line', source: SRC_RENDER,
+    minzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() });
+
+  // — tratteggio "richiede autorizzazione": indica la CATEGORIA, quindi si
+  //   disegna sempre dalla sorgente fusa per categoria — mai raddoppiato
+  //   dove le zone si sovrappongono (niente moiré), a ogni zoom
+  map.addLayer({ id: 'zones-hatch', type: 'fill', source: SRC_CAT,
+    filter: HATCH_FILTER,
+    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.45 } });
+
   // layer di hit trasparente sulle FASCE: il popup ha bisogno delle proprietà
-  // per-fascia (quote, message, reasons) che la sorgente fusa non ha
+  // per-fascia (quote, message, reasons) che le sorgenti fuse non hanno
   map.addLayer({ id: 'zones-hit', type: 'fill', source: SRC,
     paint: { 'fill-color': '#000000', 'fill-opacity': 0 } });
   // velo + bordo blu sulla zona aperta nell'accordion: emerge dalla pila
@@ -157,10 +240,18 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   map.addLayer({ id: 'zones-highlight', type: 'line', source: SRC,
     filter: highlightFilter(highlightId),
     paint: { 'line-color': '#0a84ff', 'line-width': 3 } });
+
+  // — etichette-quota: le eccezioni alla scala di dettaglio; quelle standard
+  //   solo al dettaglio fine (la quota tipica sta in legenda)
+  const labelPaint = {
+    'text-color': '#1c2530', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4,
+  } as maplibregl.SymbolLayerSpecification['paint'];
   map.addLayer({ id: 'zones-label', type: 'symbol', source: SRC,
-    filter: labelPrimaryFilter(),
-    layout: buildLabelLayout(),
-    paint: { 'text-color': '#1c2530', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4 } });
+    minzoom: ZONE_DETAIL_MINZOOM, filter: labelDiffFilter(),
+    layout: buildLabelLayout(), paint: labelPaint });
+  map.addLayer({ id: 'zones-label-standard', type: 'symbol', source: SRC,
+    minzoom: ZONE_LABEL_ALL_MINZOOM, filter: labelStandardFilter(),
+    layout: buildLabelLayout(), paint: labelPaint });
 }
 
 export function MapView(
@@ -194,6 +285,8 @@ export function MapView(
     });
     map.current = m;
     wireMapIdleFlag(m, el.current);
+    // test hook: consente a E2E/screenshot script di pilotare la camera
+    (window as unknown as { __dflightMap?: maplibregl.Map }).__dflightMap = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
     // sfondo mappa offline: in prima sessione i worker MapLibre bypassano il

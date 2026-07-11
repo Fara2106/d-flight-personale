@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  buildFillPaint, buildFillLayout, buildLinePaint, buildLabelLayout,
-  severitySortKey, highlightFilter, labelPrimaryFilter,
+  buildFillPaint, buildFillLayout, buildLinePaint, buildCatLinePaint,
+  buildLabelLayout, severitySortKey, highlightFilter,
+  labelDiffFilter, labelStandardFilter, hatchImage,
 } from '../../src/map/MapView';
-import { RESTRICTION_ORDER } from '../../src/map/mapStyle';
+import {
+  RESTRICTION_ORDER, ZONE_COLORS, ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM,
+} from '../../src/map/mapStyle';
 
 /** Estrae il valore prodotto da una match-expression MapLibre per un dato input. */
 function evalMatch(expr: unknown, value: string): number {
@@ -19,7 +22,7 @@ it('maps restriction types to colors via a data-driven expression', () => {
   const paint = buildFillPaint() as any;
   const expr = JSON.stringify(paint['fill-color']);
   expect(expr).toContain('prohibited');
-  expect(expr).toContain('#ef4444');
+  expect(expr).toContain(ZONE_COLORS.prohibited);
 });
 
 it('highlightFilter: id selezionato o sentinella che non matcha nulla', () => {
@@ -44,6 +47,10 @@ describe('leggibilità zone sovrapposte', () => {
     expect(op('prohibited')).toBeLessThanOrEqual(0.5); // resta un overlay, non copre la mappa
     // Le zone "none" sono invisibili (opacità 0): non inglobano visivamente altre zone
     expect(op('none')).toBe(0);
+    // riempimenti LEGGERI (feedback 2026-07-10): la mappa base resta leggibile;
+    // il colore quasi pieno solo dove il divieto è assoluto
+    expect(op('auth_required')).toBeLessThanOrEqual(0.15);
+    expect(op('conditional')).toBeLessThanOrEqual(0.12);
   });
 
   it('fill-sort-key: le zone più restrittive vengono disegnate sopra', () => {
@@ -63,7 +70,7 @@ describe('leggibilità zone sovrapposte', () => {
     expect(w('auth_required')).toBeGreaterThan(w('conditional'));
     // Le zone "none" sono invisibili (nessun bordo)
     expect(w('none')).toBe(0);
-    expect(JSON.stringify(paint['line-color'])).toContain('#ef4444');
+    expect(JSON.stringify(paint['line-color'])).toContain(ZONE_COLORS.prohibited);
     // ora è una case-expression per fascia: il ramo "primaria" resta ben visibile
     expect((paint['line-opacity'] as unknown[])[2]).toBeGreaterThanOrEqual(0.8);
   });
@@ -88,7 +95,37 @@ describe('dedup fasce sulla mappa (bordi annidati + etichette duplicate)', () =>
     expect(faint).toBeGreaterThan(0); // le fasce restano accennate, non invisibili
   });
 
-  it('labelPrimaryFilter: le etichette si disegnano solo sulla fascia primaria', () => {
-    expect(labelPrimaryFilter()).toEqual(['==', ['get', 'labelPrimary'], true]);
+  it('filtri etichette: eccezioni separate dalle quote standard, sempre sulla fascia primaria', () => {
+    expect(labelDiffFilter()).toEqual(['all',
+      ['==', ['get', 'labelPrimary'], true],
+      ['==', ['get', 'labelDiffers'], true]]);
+    expect(labelStandardFilter()).toEqual(['all',
+      ['==', ['get', 'labelPrimary'], true],
+      ['!=', ['get', 'labelDiffers'], true]]);
+  });
+});
+
+describe('vista d\'insieme per categoria (caso Fiumicino, 2026-07-10)', () => {
+  it('le soglie zoom sono ordinate: insieme < dettaglio < etichette standard', () => {
+    expect(ZONE_DETAIL_MINZOOM).toBeGreaterThan(5);
+    expect(ZONE_LABEL_ALL_MINZOOM).toBeGreaterThan(ZONE_DETAIL_MINZOOM);
+  });
+
+  it('bordo di categoria: netto e ben visibile, colori dalla palette', () => {
+    const paint = buildCatLinePaint() as any;
+    expect(paint['line-opacity']).toBeGreaterThanOrEqual(0.9);
+    expect(JSON.stringify(paint['line-color'])).toContain(ZONE_COLORS.auth_required);
+  });
+
+  it('tratteggio diagonale: pattern RGBA col colore auth_required, il resto trasparente', () => {
+    const img = hatchImage(ZONE_COLORS.auth_required, 12);
+    expect(img.width).toBe(12);
+    expect(img.data.length).toBe(12 * 12 * 4);
+    let colored = 0, transparent = 0;
+    for (let i = 3; i < img.data.length; i += 4) {
+      if (img.data[i] > 0) colored++; else transparent++;
+    }
+    expect(colored).toBeGreaterThan(0);
+    expect(transparent).toBeGreaterThan(colored); // righe sottili, non un tappeto
   });
 });

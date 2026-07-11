@@ -1,6 +1,7 @@
 // tests/map/popupContent.test.ts
 import { it, expect, vi } from 'vitest';
 import { buildPopupContent } from '../../src/map/popupContent';
+import { ZONE_COLORS } from '../../src/map/mapStyle';
 
 const zoneA = { id: 'a', name: 'Alfa', restrictionType: 'conditional',
   label: '≤ 60 m', upperLimitM: 60, verticalRef: 'AGL', lowerLimitM: 0,
@@ -117,8 +118,10 @@ it('colore pallino = tipo della fascia più restrittiva', () => {
   ];
   const el = buildPopupContent(zones);
   const dots = [...el.querySelectorAll('.zone-popup-dot')] as HTMLElement[];
-  // Papa (prohibited) è prima → rosso
+  // Papa (prohibited) è prima → il rosso della palette zone
   const color = dots[0]!.style.backgroundColor;
-  // Il browser restituisce rgb o hex a seconda del contesto
-  expect(color).toMatch(/red|#ef4444|239.*68.*68/i);
+  // jsdom restituisce rgb(...): confronto sul valore derivato da ZONE_COLORS
+  const [r, g, b] = [1, 3, 5].map((i) =>
+    parseInt(ZONE_COLORS.prohibited.slice(i, i + 2), 16));
+  expect(color.replace(/\s/g, '')).toBe(`rgb(${r},${g},${b})`);
 });
