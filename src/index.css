@@ -70,7 +70,30 @@ body { background: var(--bg); color: var(--text);
 
 /* Barra della modalità verifica */
 .verify-controls { position: absolute; top: calc(64px + var(--safe-top)); left: 50%;
-  transform: translateX(-50%); z-index: 20; max-width: calc(100vw - 24px); }
+  transform: translateX(-50%); z-index: 20;
+  width: max-content; max-width: calc(100vw - 24px); }
+
+/* Slider raggio: utilizzabile col TOUCH (bug iPhone 2026-07-10).
+   touch-action: none — senza, il drag diventa pan/scroll e iOS lo annulla;
+   thumb grande = bersaglio raggiungibile col dito. */
+.radius-slider { touch-action: none; flex: 1; min-width: 110px; height: 32px;
+  -webkit-appearance: none; appearance: none; background: transparent; margin: 0; }
+.radius-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: rgba(138, 147, 160, 0.4); }
+.radius-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+  width: 26px; height: 26px; margin-top: -10px; border-radius: 50%;
+  background: var(--accent); border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+.radius-slider::-moz-range-track { height: 6px; border-radius: 3px;
+  background: rgba(138, 147, 160, 0.4); }
+.radius-slider::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+
+/* Bottoni − / + del raggio: bersagli touch ≥32px, funzionano sempre */
+.radius-step { width: 32px; height: 32px; border-radius: 10px; flex: none;
+  font-size: 18px; line-height: 1; font-weight: 600; color: var(--text);
+  background: rgba(138, 147, 160, 0.18); border: 0; cursor: pointer; }
 
 /* Scheda verdetto: card a destra su desktop, bottom sheet su mobile */
 .verdict-sheet { position: absolute; right: 12px; top: calc(64px + var(--safe-top));

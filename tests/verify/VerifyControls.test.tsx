@@ -34,6 +34,31 @@ it('con punto: slider 0–500 che notifica il raggio', () => {
   // input controllato: il valore mostrato cambia solo quando il parent aggiorna la prop
 });
 
+it('slider utilizzabile col touch: touch-action disattivato e area generosa (bug iPhone 2026-07-10)', () => {
+  render(<VerifyControls {...base} hasPoint />);
+  const slider = screen.getByRole('slider') as HTMLInputElement;
+  // senza touch-action:none il drag diventa pan/scroll e iOS lo annulla
+  expect(slider.className).toContain('radius-slider');
+  expect(slider).toHaveAccessibleName(/raggio/i);
+});
+
+it('bottoni − / + regolano il raggio anche senza drag (fallback touch)', () => {
+  const change = vi.fn();
+  const { rerender } = render(
+    <VerifyControls {...base} hasPoint radiusM={100} onRadiusChange={change} />);
+  fireEvent.click(screen.getByRole('button', { name: /aumenta il raggio/i }));
+  expect(change).toHaveBeenLastCalledWith(120);
+  fireEvent.click(screen.getByRole('button', { name: /riduci il raggio/i }));
+  expect(change).toHaveBeenLastCalledWith(80);
+  // clamp ai limiti dello slider
+  rerender(<VerifyControls {...base} hasPoint radiusM={490} onRadiusChange={change} />);
+  fireEvent.click(screen.getByRole('button', { name: /aumenta il raggio/i }));
+  expect(change).toHaveBeenLastCalledWith(500);
+  rerender(<VerifyControls {...base} hasPoint radiusM={10} onRadiusChange={change} />);
+  fireEvent.click(screen.getByRole('button', { name: /riduci il raggio/i }));
+  expect(change).toHaveBeenLastCalledWith(0);
+});
+
 it('X chiude la modalità', () => {
   const close = vi.fn();
   render(<VerifyControls {...base} onClose={close} />);

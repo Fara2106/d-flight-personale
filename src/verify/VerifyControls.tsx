@@ -1,10 +1,15 @@
 // src/verify/VerifyControls.tsx
+const RADIUS_MIN = 0;
+const RADIUS_MAX = 500;
+const BTN_STEP = 20; // multiplo dello step dello slider: niente arrotondamenti
+
 export function VerifyControls(
   { hasPoint, radiusM, onRadiusChange, canUsePosition, onUsePosition, onClose }: {
     hasPoint: boolean; radiusM: number; onRadiusChange: (m: number) => void;
     canUsePosition: boolean; onUsePosition: () => void; onClose: () => void;
   }
 ) {
+  const clamp = (m: number) => Math.min(RADIUS_MAX, Math.max(RADIUS_MIN, m));
   return (
     <div className="verify-controls rounded-2xl p-3"
       style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)',
@@ -19,12 +24,19 @@ export function VerifyControls(
           )}
         </>
       ) : (
-        <label className="text-sm" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          Raggio
-          <input type="range" min={0} max={500} step={10} value={radiusM}
+        <div className="text-sm" style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 1 }}>
+          <span>Raggio</span>
+          {/* − / + funzionano sempre, anche dove il drag touch fa i capricci */}
+          <button type="button" onClick={() => onRadiusChange(clamp(radiusM - BTN_STEP))}
+            aria-label="Riduci il raggio" className="radius-step">−</button>
+          <input type="range" min={RADIUS_MIN} max={RADIUS_MAX} step={10} value={radiusM}
+            aria-label="Raggio di verifica"
+            className="radius-slider"
             onChange={e => onRadiusChange(Number(e.target.value))} />
+          <button type="button" onClick={() => onRadiusChange(clamp(radiusM + BTN_STEP))}
+            aria-label="Aumenta il raggio" className="radius-step">+</button>
           <span style={{ minWidth: 48, textAlign: 'right' }}>{radiusM} m</span>
-        </label>
+        </div>
       )}
       <button onClick={onClose} aria-label="Esci dalla verifica"
         style={{ color: 'var(--text-muted)', fontSize: 16 }}>✕</button>
