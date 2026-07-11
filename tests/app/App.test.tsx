@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import 'fake-indexeddb/auto';
 
 vi.mock('../../src/map/MapView', () => ({ MapView: () => <div data-testid="map" /> }));
@@ -26,10 +26,18 @@ it('espone un data-build non vuoto anche senza VITE_BUILD_ID esplicito (hook E2E
   expect(root!.getAttribute('data-build')).not.toBe('');
 });
 
-it('bottone Profilo apre e chiude il pannello', async () => {
+it('niente bottone Profilo nella chrome principale (feedback iPhone 2026-07-10)', async () => {
   render(<App />);
-  fireEvent.click(await screen.findByRole('button', { name: /^profilo$/i }));
-  expect(await screen.findByRole('dialog', { name: /profilo/i })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: /chiudi profilo/i }));
-  expect(screen.queryByRole('dialog', { name: /profilo/i })).not.toBeInTheDocument();
+  await screen.findByRole('button', { name: /^verifica$/i });
+  // il profilo resta raggiungibile dal verdetto (VerdictSheet → onOpenProfile)
+  expect(screen.queryByRole('button', { name: /^profilo$/i })).not.toBeInTheDocument();
+});
+
+it('il pin della posizione sta nella barra in alto, accanto a ricerca e tema', async () => {
+  render(<App />);
+  const pin = await screen.findByRole('button', { name: /segui la mia posizione/i });
+  const topBar = pin.closest('div[style*="top"]');
+  expect(topBar).not.toBeNull();
+  // stessa barra della ricerca
+  expect(topBar!.querySelector('input')).not.toBeNull();
 });

@@ -29,7 +29,7 @@ describe('chrome su schermi stretti (collaudo iPhone 2026-07-10)', () => {
     // su mobile resta solo "Legenda": la spiegazione è nascosta sotto sm
     const extra = details?.querySelector('summary span.hidden');
     expect(extra?.className).toContain('sm:inline');
-    expect(extra?.textContent).toContain('colore = restrizione');
+    expect(extra?.textContent).toContain('quota indicata');
   });
 
   it('Legend: parte chiusa su schermi stretti', () => {

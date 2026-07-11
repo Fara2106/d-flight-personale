@@ -21,6 +21,7 @@ import { OfflineBanner } from './ui/OfflineBanner';
 import { useOnline } from './ui/useOnline';
 import { zonesAtPoint } from './verify/intersect';
 import { evaluate } from './rules/rulesEngine';
+import { categoryAltitudes } from './data/categoryAltitudes';
 import type { Zone, DatasetMeta } from './data/ed269.types';
 
 type VerifyUiState = { point: { lat: number; lon: number } | null; radiusM: number };
@@ -56,6 +57,9 @@ export default function App() {
 
   async function refresh() { setZones(await loadZones()); setMeta(await loadMeta()); setErr(null); }
 
+  // quota tipica per categoria → riga quota in legenda
+  const altitudes = useMemo(() => categoryAltitudes(zones), [zones]);
+
   const verdict = useMemo(() => {
     if (!verify?.point || !profiles.activeDrone) return null;
     return evaluate(
@@ -82,6 +86,8 @@ export default function App() {
         display:'flex', gap:10, alignItems:'flex-start' }}>
         <div style={{ flex:1, maxWidth:480 }}><SearchBox onPick={r => setFlyTo({ lat:r.lat, lon:r.lon })} disabled={!online} /></div>
         <ThemeToggle value={theme} onChange={setTheme} />
+        <LocateButton active={geo.watching}
+          onClick={() => { if (geo.watching) geo.stop(); else geo.start(); }} />
       </div>
 
       <div style={{ position:'absolute', bottom:'calc(var(--safe-bottom) + 12px)',
@@ -90,7 +96,7 @@ export default function App() {
         maxWidth:'calc(100vw - 140px)', alignItems:'flex-start' }}>
         {!online && <OfflineBanner />}
         <DataStatusBanner meta={meta} />
-        <Legend />
+        <Legend altitudes={altitudes} />
         <Disclaimer />
       </div>
 
@@ -104,13 +110,8 @@ export default function App() {
           style={{ background: 'var(--accent)' }}>
           Verifica
         </button>
-        <button onClick={() => setProfileOpen(true)}
-          className="rounded-xl px-4 py-2 text-sm font-semibold"
-          style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)' }}>
-          Profilo
-        </button>
-        <LocateButton active={geo.watching}
-          onClick={() => { if (geo.watching) geo.stop(); else geo.start(); }} />
+        {/* Profilo: niente bottone in chrome (feedback 2026-07-10) — resta
+            raggiungibile dal verdetto, dov'è utile (VerdictSheet → Profilo) */}
         <ImportButton onDone={async () => { await refresh(); }} onError={setErr} />
       </div>
 
