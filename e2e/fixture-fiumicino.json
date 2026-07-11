@@ -1,0 +1,2298 @@
+{
+ "features": [
+  {
+   "identifier": "FCO001",
+   "name": "LIRF CTR FIUMICINO",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.38495,
+         41.77
+        ],
+        [
+         12.38001,
+         41.79798
+        ],
+        [
+         12.36553,
+         41.82405
+        ],
+        [
+         12.3425,
+         41.84644
+        ],
+        [
+         12.31248,
+         41.86362
+        ],
+        [
+         12.27752,
+         41.87442
+        ],
+        [
+         12.24,
+         41.87811
+        ],
+        [
+         12.20248,
+         41.87442
+        ],
+        [
+         12.16752,
+         41.86362
+        ],
+        [
+         12.1375,
+         41.84644
+        ],
+        [
+         12.11447,
+         41.82405
+        ],
+        [
+         12.09999,
+         41.79798
+        ],
+        [
+         12.09505,
+         41.77
+        ],
+        [
+         12.09999,
+         41.74202
+        ],
+        [
+         12.11447,
+         41.71595
+        ],
+        [
+         12.1375,
+         41.69356
+        ],
+        [
+         12.16752,
+         41.67638
+        ],
+        [
+         12.20248,
+         41.66558
+        ],
+        [
+         12.24,
+         41.66189
+        ],
+        [
+         12.27752,
+         41.66558
+        ],
+        [
+         12.31248,
+         41.67638
+        ],
+        [
+         12.3425,
+         41.69356
+        ],
+        [
+         12.36553,
+         41.71595
+        ],
+        [
+         12.38001,
+         41.74202
+        ],
+        [
+         12.38495,
+         41.77
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO002",
+   "name": "LIRF CTR FIUMICINO",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.32455,
+         41.77
+        ],
+        [
+         12.32167,
+         41.78632
+        ],
+        [
+         12.31323,
+         41.80153
+        ],
+        [
+         12.29979,
+         41.81459
+        ],
+        [
+         12.28228,
+         41.82461
+        ],
+        [
+         12.26188,
+         41.83091
+        ],
+        [
+         12.24,
+         41.83306
+        ],
+        [
+         12.21812,
+         41.83091
+        ],
+        [
+         12.19772,
+         41.82461
+        ],
+        [
+         12.18021,
+         41.81459
+        ],
+        [
+         12.16677,
+         41.80153
+        ],
+        [
+         12.15833,
+         41.78632
+        ],
+        [
+         12.15545,
+         41.77
+        ],
+        [
+         12.15833,
+         41.75368
+        ],
+        [
+         12.16677,
+         41.73847
+        ],
+        [
+         12.18021,
+         41.72541
+        ],
+        [
+         12.19772,
+         41.71539
+        ],
+        [
+         12.21812,
+         41.70909
+        ],
+        [
+         12.24,
+         41.70694
+        ],
+        [
+         12.26188,
+         41.70909
+        ],
+        [
+         12.28228,
+         41.71539
+        ],
+        [
+         12.29979,
+         41.72541
+        ],
+        [
+         12.31323,
+         41.73847
+        ],
+        [
+         12.32167,
+         41.75368
+        ],
+        [
+         12.32455,
+         41.77
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO003",
+   "name": "LIRF ATZ RWY 16L/34R",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.16331,
+         41.70839
+        ],
+        [
+         12.3887,
+         41.81341
+        ],
+        [
+         12.35669,
+         41.85161
+        ],
+        [
+         12.1313,
+         41.74659
+        ],
+        [
+         12.16331,
+         41.70839
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO004",
+   "name": "LIRF ATZ RWY 16R/34L",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.11335,
+         41.67839
+        ],
+        [
+         12.33864,
+         41.78341
+        ],
+        [
+         12.30665,
+         41.82161
+        ],
+        [
+         12.08136,
+         41.71659
+        ],
+        [
+         12.11335,
+         41.67839
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO005",
+   "name": "LI P_ROMA EST",
+   "restriction": "PROHIBITED",
+   "message": "Divieto assoluto.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.35249,
+         41.72528
+        ],
+        [
+         12.46099,
+         41.73093
+        ],
+        [
+         12.44751,
+         41.87472
+        ],
+        [
+         12.33901,
+         41.86907
+        ],
+        [
+         12.35249,
+         41.72528
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 0,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO006",
+   "name": "LI P_DEPOSITO",
+   "restriction": "PROHIBITED",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.23975,
+         41.74608
+        ],
+        [
+         12.25402,
+         41.74795
+        ],
+        [
+         12.25025,
+         41.76392
+        ],
+        [
+         12.23598,
+         41.76205
+        ],
+        [
+         12.23975,
+         41.74608
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 0,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO007",
+   "name": "LI P_IMPIANTO",
+   "restriction": "PROHIBITED",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.1621,
+         41.87
+        ],
+        [
+         12.16169,
+         41.87233
+        ],
+        [
+         12.16048,
+         41.8745
+        ],
+        [
+         12.15855,
+         41.87637
+        ],
+        [
+         12.15605,
+         41.8778
+        ],
+        [
+         12.15313,
+         41.8787
+        ],
+        [
+         12.15,
+         41.87901
+        ],
+        [
+         12.14687,
+         41.8787
+        ],
+        [
+         12.14395,
+         41.8778
+        ],
+        [
+         12.14145,
+         41.87637
+        ],
+        [
+         12.13952,
+         41.8745
+        ],
+        [
+         12.13831,
+         41.87233
+        ],
+        [
+         12.1379,
+         41.87
+        ],
+        [
+         12.13831,
+         41.86767
+        ],
+        [
+         12.13952,
+         41.8655
+        ],
+        [
+         12.14145,
+         41.86363
+        ],
+        [
+         12.14395,
+         41.8622
+        ],
+        [
+         12.14687,
+         41.8613
+        ],
+        [
+         12.15,
+         41.86099
+        ],
+        [
+         12.15313,
+         41.8613
+        ],
+        [
+         12.15605,
+         41.8622
+        ],
+        [
+         12.15855,
+         41.86363
+        ],
+        [
+         12.16048,
+         41.8655
+        ],
+        [
+         12.16169,
+         41.86767
+        ],
+        [
+         12.1621,
+         41.87
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 0,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO008",
+   "name": "LI R_100 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.18061,
+         41.60451
+        ],
+        [
+         12.20611,
+         41.66165
+        ],
+        [
+         12.158,
+         41.67364
+        ],
+        [
+         12.13251,
+         41.61649
+        ],
+        [
+         12.18061,
+         41.60451
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO009",
+   "name": "LI R_101 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.39943,
+         41.86263
+        ],
+        [
+         12.39743,
+         41.87203
+        ],
+        [
+         12.39163,
+         41.88051
+        ],
+        [
+         12.38259,
+         41.88724
+        ],
+        [
+         12.3712,
+         41.89156
+        ],
+        [
+         12.35858,
+         41.89305
+        ],
+        [
+         12.34596,
+         41.89156
+        ],
+        [
+         12.33457,
+         41.88724
+        ],
+        [
+         12.32554,
+         41.88051
+        ],
+        [
+         12.31974,
+         41.87203
+        ],
+        [
+         12.31774,
+         41.86263
+        ],
+        [
+         12.31974,
+         41.85323
+        ],
+        [
+         12.32554,
+         41.84475
+        ],
+        [
+         12.33457,
+         41.83802
+        ],
+        [
+         12.34596,
+         41.8337
+        ],
+        [
+         12.35858,
+         41.83221
+        ],
+        [
+         12.3712,
+         41.8337
+        ],
+        [
+         12.38259,
+         41.83802
+        ],
+        [
+         12.39163,
+         41.84475
+        ],
+        [
+         12.39743,
+         41.85323
+        ],
+        [
+         12.39943,
+         41.86263
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO010",
+   "name": "LI R_102 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2307,
+         41.66803
+        ],
+        [
+         12.2682,
+         41.67358
+        ],
+        [
+         12.26327,
+         41.69218
+        ],
+        [
+         12.22577,
+         41.68662
+        ],
+        [
+         12.2307,
+         41.66803
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO011",
+   "name": "LI R_103 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.1747,
+         41.82914
+        ],
+        [
+         12.28064,
+         41.88783
+        ],
+        [
+         12.23372,
+         41.93478
+        ],
+        [
+         12.12778,
+         41.87608
+        ],
+        [
+         12.1747,
+         41.82914
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO012",
+   "name": "LI R_104 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2115,
+         41.7354
+        ],
+        [
+         12.248,
+         41.77245
+        ],
+        [
+         12.18585,
+         41.80651
+        ],
+        [
+         12.14935,
+         41.76946
+        ],
+        [
+         12.2115,
+         41.7354
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO013",
+   "name": "LI R_105 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.12664,
+         41.64523
+        ],
+        [
+         12.12554,
+         41.65041
+        ],
+        [
+         12.12235,
+         41.65509
+        ],
+        [
+         12.11738,
+         41.6588
+        ],
+        [
+         12.11112,
+         41.66119
+        ],
+        [
+         12.10418,
+         41.66201
+        ],
+        [
+         12.09725,
+         41.66119
+        ],
+        [
+         12.09099,
+         41.6588
+        ],
+        [
+         12.08602,
+         41.65509
+        ],
+        [
+         12.08283,
+         41.65041
+        ],
+        [
+         12.08173,
+         41.64523
+        ],
+        [
+         12.08283,
+         41.64005
+        ],
+        [
+         12.08602,
+         41.63537
+        ],
+        [
+         12.09099,
+         41.63166
+        ],
+        [
+         12.09725,
+         41.62927
+        ],
+        [
+         12.10418,
+         41.62845
+        ],
+        [
+         12.11112,
+         41.62927
+        ],
+        [
+         12.11738,
+         41.63166
+        ],
+        [
+         12.12235,
+         41.63537
+        ],
+        [
+         12.12554,
+         41.64005
+        ],
+        [
+         12.12664,
+         41.64523
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO014",
+   "name": "LI R_106 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.19651,
+         41.86667
+        ],
+        [
+         12.29188,
+         41.92606
+        ],
+        [
+         12.25971,
+         41.95467
+        ],
+        [
+         12.16434,
+         41.89529
+        ],
+        [
+         12.19651,
+         41.86667
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO015",
+   "name": "LI R_107 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.40304,
+         41.62525
+        ],
+        [
+         12.41721,
+         41.64793
+        ],
+        [
+         12.31926,
+         41.6821
+        ],
+        [
+         12.30509,
+         41.65942
+        ],
+        [
+         12.40304,
+         41.62525
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO016",
+   "name": "LI R_108 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.13808,
+         41.64177
+        ],
+        [
+         12.16849,
+         41.64264
+        ],
+        [
+         12.16745,
+         41.66275
+        ],
+        [
+         12.13705,
+         41.66187
+        ],
+        [
+         12.13808,
+         41.64177
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO017",
+   "name": "LI R_109 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.37509,
+         41.70898
+        ],
+        [
+         12.47502,
+         41.74658
+        ],
+        [
+         12.43666,
+         41.80331
+        ],
+        [
+         12.33673,
+         41.76571
+        ],
+        [
+         12.37509,
+         41.70898
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO018",
+   "name": "LI R_110 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.29066,
+         41.81634
+        ],
+        [
+         12.30713,
+         41.83865
+        ],
+        [
+         12.21659,
+         41.87574
+        ],
+        [
+         12.20012,
+         41.85343
+        ],
+        [
+         12.29066,
+         41.81634
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO019",
+   "name": "LI R_111 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.15052,
+         41.78739
+        ],
+        [
+         12.22626,
+         41.83853
+        ],
+        [
+         12.1544,
+         41.8976
+        ],
+        [
+         12.07866,
+         41.84647
+        ],
+        [
+         12.15052,
+         41.78739
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO020",
+   "name": "LI R_112 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.38047,
+         41.76763
+        ],
+        [
+         12.42921,
+         41.77691
+        ],
+        [
+         12.41292,
+         41.82442
+        ],
+        [
+         12.36418,
+         41.81514
+        ],
+        [
+         12.38047,
+         41.76763
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO021",
+   "name": "LI R_113 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.07559,
+         41.89931
+        ],
+        [
+         12.13197,
+         41.90948
+        ],
+        [
+         12.12368,
+         41.93495
+        ],
+        [
+         12.0673,
+         41.92478
+        ],
+        [
+         12.07559,
+         41.89931
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO022",
+   "name": "LI R_114 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.454,
+         41.76663
+        ],
+        [
+         12.46866,
+         41.85827
+        ],
+        [
+         12.36121,
+         41.86781
+        ],
+        [
+         12.34655,
+         41.77618
+        ],
+        [
+         12.454,
+         41.76663
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO023",
+   "name": "LI R_115 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.0827,
+         41.73451
+        ],
+        [
+         12.19767,
+         41.74794
+        ],
+        [
+         12.18957,
+         41.78652
+        ],
+        [
+         12.0746,
+         41.7731
+        ],
+        [
+         12.0827,
+         41.73451
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO024",
+   "name": "LI R_116 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2534,
+         41.80527
+        ],
+        [
+         12.25229,
+         41.81053
+        ],
+        [
+         12.24904,
+         41.81528
+        ],
+        [
+         12.24398,
+         41.81905
+        ],
+        [
+         12.23761,
+         41.82147
+        ],
+        [
+         12.23055,
+         41.8223
+        ],
+        [
+         12.22349,
+         41.82147
+        ],
+        [
+         12.21712,
+         41.81905
+        ],
+        [
+         12.21206,
+         41.81528
+        ],
+        [
+         12.20881,
+         41.81053
+        ],
+        [
+         12.2077,
+         41.80527
+        ],
+        [
+         12.20881,
+         41.8
+        ],
+        [
+         12.21206,
+         41.79526
+        ],
+        [
+         12.21712,
+         41.79149
+        ],
+        [
+         12.22349,
+         41.78907
+        ],
+        [
+         12.23055,
+         41.78823
+        ],
+        [
+         12.23761,
+         41.78907
+        ],
+        [
+         12.24398,
+         41.79149
+        ],
+        [
+         12.24904,
+         41.79526
+        ],
+        [
+         12.25229,
+         41.8
+        ],
+        [
+         12.2534,
+         41.80527
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO025",
+   "name": "LI R_117 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.23407,
+         41.86679
+        ],
+        [
+         12.2325,
+         41.87417
+        ],
+        [
+         12.22794,
+         41.88083
+        ],
+        [
+         12.22084,
+         41.88612
+        ],
+        [
+         12.21189,
+         41.88952
+        ],
+        [
+         12.20197,
+         41.89069
+        ],
+        [
+         12.19206,
+         41.88952
+        ],
+        [
+         12.18311,
+         41.88612
+        ],
+        [
+         12.17601,
+         41.88083
+        ],
+        [
+         12.17145,
+         41.87417
+        ],
+        [
+         12.16988,
+         41.86679
+        ],
+        [
+         12.17145,
+         41.8594
+        ],
+        [
+         12.17601,
+         41.85274
+        ],
+        [
+         12.18311,
+         41.84745
+        ],
+        [
+         12.19206,
+         41.84406
+        ],
+        [
+         12.20197,
+         41.84289
+        ],
+        [
+         12.21189,
+         41.84406
+        ],
+        [
+         12.22084,
+         41.84745
+        ],
+        [
+         12.22794,
+         41.85274
+        ],
+        [
+         12.2325,
+         41.8594
+        ],
+        [
+         12.23407,
+         41.86679
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO026",
+   "name": "LI R_118 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.04167,
+         41.77884
+        ],
+        [
+         12.12766,
+         41.80419
+        ],
+        [
+         12.08925,
+         41.87656
+        ],
+        [
+         12.00325,
+         41.85122
+        ],
+        [
+         12.04167,
+         41.77884
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO027",
+   "name": "LI R_119 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.32465,
+         41.66359
+        ],
+        [
+         12.3229,
+         41.67185
+        ],
+        [
+         12.31782,
+         41.6793
+        ],
+        [
+         12.3099,
+         41.68521
+        ],
+        [
+         12.29992,
+         41.68901
+        ],
+        [
+         12.28886,
+         41.69032
+        ],
+        [
+         12.2778,
+         41.68901
+        ],
+        [
+         12.26783,
+         41.68521
+        ],
+        [
+         12.25991,
+         41.6793
+        ],
+        [
+         12.25483,
+         41.67185
+        ],
+        [
+         12.25308,
+         41.66359
+        ],
+        [
+         12.25483,
+         41.65532
+        ],
+        [
+         12.25991,
+         41.64787
+        ],
+        [
+         12.26783,
+         41.64196
+        ],
+        [
+         12.2778,
+         41.63816
+        ],
+        [
+         12.28886,
+         41.63685
+        ],
+        [
+         12.29992,
+         41.63816
+        ],
+        [
+         12.3099,
+         41.64196
+        ],
+        [
+         12.31782,
+         41.64787
+        ],
+        [
+         12.3229,
+         41.65532
+        ],
+        [
+         12.32465,
+         41.66359
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO028",
+   "name": "LI R_120 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.11529,
+         41.74935
+        ],
+        [
+         12.13486,
+         41.81462
+        ],
+        [
+         12.02961,
+         41.83217
+        ],
+        [
+         12.01004,
+         41.76689
+        ],
+        [
+         12.11529,
+         41.74935
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO029",
+   "name": "LI R_121 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2674,
+         41.87479
+        ],
+        [
+         12.26541,
+         41.88413
+        ],
+        [
+         12.25965,
+         41.89256
+        ],
+        [
+         12.25066,
+         41.89925
+        ],
+        [
+         12.23935,
+         41.90354
+        ],
+        [
+         12.2268,
+         41.90502
+        ],
+        [
+         12.21426,
+         41.90354
+        ],
+        [
+         12.20294,
+         41.89925
+        ],
+        [
+         12.19396,
+         41.89256
+        ],
+        [
+         12.18819,
+         41.88413
+        ],
+        [
+         12.1862,
+         41.87479
+        ],
+        [
+         12.18819,
+         41.86545
+        ],
+        [
+         12.19396,
+         41.85702
+        ],
+        [
+         12.20294,
+         41.85034
+        ],
+        [
+         12.21426,
+         41.84604
+        ],
+        [
+         12.2268,
+         41.84456
+        ],
+        [
+         12.23935,
+         41.84604
+        ],
+        [
+         12.25066,
+         41.85034
+        ],
+        [
+         12.25965,
+         41.85702
+        ],
+        [
+         12.26541,
+         41.86545
+        ],
+        [
+         12.2674,
+         41.87479
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO030",
+   "name": "LI R_122 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.43057,
+         41.80319
+        ],
+        [
+         12.43693,
+         41.86624
+        ],
+        [
+         12.36509,
+         41.87026
+        ],
+        [
+         12.35873,
+         41.80721
+        ],
+        [
+         12.43057,
+         41.80319
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO031",
+   "name": "LI R_123 ROMA OVEST",
+   "restriction": "REQ_AUTHORISATION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2223,
+         41.62248
+        ],
+        [
+         12.21964,
+         41.63508
+        ],
+        [
+         12.21189,
+         41.64644
+        ],
+        [
+         12.19982,
+         41.65547
+        ],
+        [
+         12.18462,
+         41.66126
+        ],
+        [
+         12.16776,
+         41.66325
+        ],
+        [
+         12.15091,
+         41.66126
+        ],
+        [
+         12.1357,
+         41.65547
+        ],
+        [
+         12.12363,
+         41.64644
+        ],
+        [
+         12.11589,
+         41.63508
+        ],
+        [
+         12.11322,
+         41.62248
+        ],
+        [
+         12.11589,
+         41.60988
+        ],
+        [
+         12.12363,
+         41.59851
+        ],
+        [
+         12.1357,
+         41.58949
+        ],
+        [
+         12.15091,
+         41.5837
+        ],
+        [
+         12.16776,
+         41.58171
+        ],
+        [
+         12.18462,
+         41.5837
+        ],
+        [
+         12.19982,
+         41.58949
+        ],
+        [
+         12.21189,
+         41.59851
+        ],
+        [
+         12.21964,
+         41.60988
+        ],
+        [
+         12.2223,
+         41.62248
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO032",
+   "name": "LI C_200",
+   "restriction": "CONDITIONAL",
+   "message": "Condizioni locali.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.07855,
+         41.84421
+        ],
+        [
+         12.17221,
+         41.85029
+        ],
+        [
+         12.16739,
+         41.89142
+        ],
+        [
+         12.07374,
+         41.88534
+        ],
+        [
+         12.07855,
+         41.84421
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO033",
+   "name": "LI C_201",
+   "restriction": "CONDITIONAL",
+   "message": "Condizioni locali.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.10694,
+         41.90013
+        ],
+        [
+         12.15812,
+         41.93513
+        ],
+        [
+         12.13078,
+         41.95725
+        ],
+        [
+         12.0796,
+         41.92225
+        ],
+        [
+         12.10694,
+         41.90013
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO034",
+   "name": "LI C_202",
+   "restriction": "CONDITIONAL",
+   "message": "Condizioni locali.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.07707,
+         41.87085
+        ],
+        [
+         12.11515,
+         41.90735
+        ],
+        [
+         12.07732,
+         41.92922
+        ],
+        [
+         12.03923,
+         41.89272
+        ],
+        [
+         12.07707,
+         41.87085
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO035",
+   "name": "LI C_203",
+   "restriction": "CONDITIONAL",
+   "message": "Condizioni locali.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.21714,
+         41.58345
+        ],
+        [
+         12.26058,
+         41.63043
+        ],
+        [
+         12.21155,
+         41.65577
+        ],
+        [
+         12.16811,
+         41.60879
+        ],
+        [
+         12.21714,
+         41.58345
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO036",
+   "name": "LI C_204",
+   "restriction": "CONDITIONAL",
+   "message": "Condizioni locali.",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.2851,
+         41.72272
+        ],
+        [
+         12.3561,
+         41.74898
+        ],
+        [
+         12.33844,
+         41.77556
+        ],
+        [
+         12.26744,
+         41.7493
+        ],
+        [
+         12.2851,
+         41.72272
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 60,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO037",
+   "name": "LI G_LITORALE",
+   "restriction": "NO_RESTRICTION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.00278,
+         41.61457
+        ],
+        [
+         12.09595,
+         41.63322
+        ],
+        [
+         12.07722,
+         41.68543
+        ],
+        [
+         11.98405,
+         41.66678
+        ],
+        [
+         12.00278,
+         41.61457
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  },
+  {
+   "identifier": "FCO038",
+   "name": "LI G_CAMPAGNA",
+   "restriction": "NO_RESTRICTION",
+   "geometry": [
+    {
+     "horizontalProjection": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         12.32616,
+         41.63
+        ],
+        [
+         12.32493,
+         41.637
+        ],
+        [
+         12.32131,
+         41.64351
+        ],
+        [
+         12.31557,
+         41.64911
+        ],
+        [
+         12.30808,
+         41.65341
+        ],
+        [
+         12.29936,
+         41.65611
+        ],
+        [
+         12.29,
+         41.65703
+        ],
+        [
+         12.28064,
+         41.65611
+        ],
+        [
+         12.27192,
+         41.65341
+        ],
+        [
+         12.26443,
+         41.64911
+        ],
+        [
+         12.25869,
+         41.64351
+        ],
+        [
+         12.25507,
+         41.637
+        ],
+        [
+         12.25384,
+         41.63
+        ],
+        [
+         12.25507,
+         41.623
+        ],
+        [
+         12.25869,
+         41.61649
+        ],
+        [
+         12.26443,
+         41.61089
+        ],
+        [
+         12.27192,
+         41.60659
+        ],
+        [
+         12.28064,
+         41.60389
+        ],
+        [
+         12.29,
+         41.60297
+        ],
+        [
+         12.29936,
+         41.60389
+        ],
+        [
+         12.30808,
+         41.60659
+        ],
+        [
+         12.31557,
+         41.61089
+        ],
+        [
+         12.32131,
+         41.61649
+        ],
+        [
+         12.32493,
+         41.623
+        ],
+        [
+         12.32616,
+         41.63
+        ]
+       ]
+      ]
+     },
+     "lowerLimit": 0,
+     "upperLimit": 120,
+     "upperVerticalReference": "AGL",
+     "uomDimensions": "M"
+    }
+   ]
+  }
+ ]
+}

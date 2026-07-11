@@ -54,8 +54,8 @@ porta_occupata() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
 # ── Gotcha iCloud: i duplicati di conflitto "* 2.*" rompono Vite
 find . -name "* 2.*" -not -path "./node_modules/*" -delete 2>/dev/null
 
-# ── Dipendenze
-if [ ! -d node_modules ]; then
+# ── Dipendenze (anche se il lockfile è cambiato dopo un git pull/commit)
+if [ ! -d node_modules ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
   echo "Installo le dipendenze (npm install)…"
   npm install || { echo "ERRORE: npm install fallito (vedi sopra)."; resta_aperto; exit 1; }
 fi
