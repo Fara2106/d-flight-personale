@@ -1,7 +1,7 @@
 # MEMORIA — D-Flight personale
 
 > Diario di progetto + **documento di handoff** per continuare in una nuova chat.
-> Ultimo aggiornamento: 2026-07-10 sera — **Backlog Minor Fase 3 quasi tutto chiuso** (ricerca robusta offline/rete giù, `data-build` = SHA git in prod, TTL cache stile, E2E deterministici con `data-map-idle` e cleanup garantito). Resta solo la status-bar iOS (dopo test iPhone). Suite 221/221, E2E 15/15 + offline 11/11. **Da far riverificare a Lorenzo su iPhone (toast → Aggiorna).**
+> Ultimo aggiornamento: 2026-07-11 — sessione Cowork, **9 commit locali su `main` NON pushati** (col presente). Round 1: Fiumicino leggibile (vista per categoria, palette carta aeronautica, etichette-quota solo eccezioni), legenda con quote, via bottone Profilo, 📍 in alto a dx, fix slider raggio touch. Round 2 (dopo secondo bocciato): **mosaico piatto a cascata** (un colore per punto), veli leggerissimi, tratteggio discreto solo al dettaglio, screenshot `v2-*` con basemap finta visibile. Suite 247/247, tsc, build ok. **In attesa: verdetto estetico di Lorenzo sui v2 → E2E sul Mac → push suo** (nuova dipendenza `@turf/difference`: serve `npm install`, avvio.command lo fa da solo). Dettagli nelle prime due voci del TODO e nel Log 2026-07-11.
 
 ## Cos'è
 Web app (PWA) personale **non ufficiale** per visualizzare le **zone geografiche UAS italiane** (dati ufficiali D-Flight, formato ED-269) con UI moderna, e pianificare voli con verdetto personalizzato. Non sostituisce la verifica ufficiale su D-Flight.
