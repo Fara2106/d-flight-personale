@@ -30,14 +30,14 @@ function hexToRgb(hex: string): [number, number, number] {
  *  distingue la categoria anche dove i veli si sovrappongono, senza spegnere
  *  la mappa. Rigenerato a ogni cambio stile (le immagini non sopravvivono a
  *  setStyle). */
-export function hatchImage(hex: string, size = 16): { width: number; height: number; data: Uint8Array } {
+export function hatchImage(hex: string, size = 22): { width: number; height: number; data: Uint8Array } {
   const [r, g, b] = hexToRgb(hex);
   const data = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      if ((x + y) % size < 2) { // righe diagonali sottili, ben distanziate
+      if ((x + y) % size < 2) { // righe diagonali sottili, MOLTO distanziate
         const i = (y * size + x) * 4;
-        data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 130;
+        data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 90;
       }
     }
   }
@@ -222,12 +222,13 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     minzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() });
 
-  // — tratteggio "richiede autorizzazione": indica la CATEGORIA, quindi si
-  //   disegna sempre dalla sorgente fusa per categoria — mai raddoppiato
-  //   dove le zone si sovrappongono (niente moiré), a ogni zoom
+  // — tratteggio "richiede autorizzazione": indica la CATEGORIA (sorgente
+  //   fusa: mai raddoppiato, niente moiré) ma SOLO alla scala di dettaglio —
+  //   a zoom bassi il CTR copre mezzo schermo e il pattern diventa rumore:
+  //   lì resta il velo piatto leggerissimo (feedback 2026-07-11)
   map.addLayer({ id: 'zones-hatch', type: 'fill', source: SRC_CAT,
-    filter: HATCH_FILTER,
-    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.45 } });
+    minzoom: ZONE_DETAIL_MINZOOM, filter: HATCH_FILTER,
+    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.3 } });
 
   // layer di hit trasparente sulle FASCE: il popup ha bisogno delle proprietà
   // per-fascia (quote, message, reasons) che le sorgenti fuse non hanno

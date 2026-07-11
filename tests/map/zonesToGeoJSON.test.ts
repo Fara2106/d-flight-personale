@@ -228,6 +228,39 @@ describe('zonesToCategoryUnionAsync: vista d\'insieme per categoria (zoom bassi)
     expect(fc.features).toHaveLength(1);
   });
 
+  it('CASCATA COMPLETA: ogni punto mostra solo la categoria più restrittiva (mosaico disgiunto)', async () => {
+    const { default: booleanIntersects } = await import('@turf/boolean-intersects');
+    // tre rettangoli annidati per x: conditional 0–6, auth 1–4, prohibited 2–3
+    const fc = await zonesToCategoryUnionAsync([
+      rect('c', 'Cond', 0, 6, { restrictionType: 'conditional' }),
+      rect('a', 'Auth', 1, 4, { restrictionType: 'auth_required' }),
+      rect('p', 'Div', 2, 3, { restrictionType: 'prohibited' }),
+    ]);
+    const by = (t: string) => fc.features.find((f) => f.properties?.restrictionType === t)!;
+    const probe = (x0: number, x1: number) => ({
+      type: 'Feature' as const, properties: {},
+      geometry: { type: 'Polygon' as const,
+        coordinates: [[[x0, 0.4], [x1, 0.4], [x1, 0.6], [x0, 0.6], [x0, 0.4]]] },
+    });
+    // nel cuore vietato (x≈2.5): SOLO prohibited
+    expect(booleanIntersects(probe(2.4, 2.6), by('prohibited') as never)).toBe(true);
+    expect(booleanIntersects(probe(2.4, 2.6), by('auth_required') as never)).toBe(false);
+    expect(booleanIntersects(probe(2.4, 2.6), by('conditional') as never)).toBe(false);
+    // nell'anello auth (x≈1.5): SOLO auth
+    expect(booleanIntersects(probe(1.4, 1.6), by('auth_required') as never)).toBe(true);
+    expect(booleanIntersects(probe(1.4, 1.6), by('conditional') as never)).toBe(false);
+    // nell'anello esterno (x≈5): SOLO conditional
+    expect(booleanIntersects(probe(4.9, 5.1), by('conditional') as never)).toBe(true);
+  });
+
+  it('categoria interamente coperta da una più severa → nessuna feature (niente doppio velo)', async () => {
+    const fc = await zonesToCategoryUnionAsync([
+      rect('a', 'Auth', 1, 2, { restrictionType: 'auth_required' }),
+      rect('p', 'Div', 0, 3, { restrictionType: 'prohibited' }),
+    ]);
+    expect(fc.features.map((f) => f.properties?.restrictionType)).toEqual(['prohibited']);
+  });
+
   it('il rosso resta pulito: l\'area vietata è SOTTRATTA dalle altre categorie', async () => {
     const { default: booleanIntersects } = await import('@turf/boolean-intersects');
     const fc = await zonesToCategoryUnionAsync([

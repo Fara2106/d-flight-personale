@@ -164,22 +164,23 @@ export async function zonesToUnionGeoJSONAsync(zones: Zone[]): Promise<FeatureCo
 
 /**
  * Vista d'INSIEME per gli zoom bassi (caso Fiumicino, 2026-07-10): tutte le
- * zone di una categoria fuse in un solo poligono → un solo velo di colore e
- * un solo bordo esterno per categoria, invece della ragnatela di decine di
- * zone sovrapposte. Union incrementale a batch con yield del main thread.
- * Fallback conservativo per batch: se un'union fallisce, le geometrie di quel
- * batch restano feature separate (mai ridurre la copertura visiva).
+ * zone di una categoria fuse in un solo poligono, e le categorie ritagliate a
+ * CASCATA (feedback 2026-07-11): da ogni categoria viene sottratta l'unione
+ * di TUTTE le più restrittive → un mosaico piatto di regioni disgiunte, ogni
+ * punto mostra un solo colore (il più severo). Union incrementale a batch con
+ * yield del main thread. Fallback conservativi: se un'union di batch fallisce
+ * le geometrie del batch restano separate; se un ritaglio fallisce la
+ * categoria resta intera (meglio un velo doppio che un buco).
  */
 export async function zonesToCategoryUnionAsync(zones: Zone[]): Promise<FeatureCollection> {
   const features: Feature[] = [];
-  let prohibitedUnion: Feature<Polygon | MultiPolygon> | null = null;
+  // unione progressiva delle categorie più severe già emesse (per il ritaglio)
+  let carved: Feature<Polygon | MultiPolygon> | null = null;
   const byType = new Map<RestrictionType, Zone[]>();
   for (const z of zones) {
     const g = byType.get(z.restrictionType);
     if (g) g.push(z); else byType.set(z.restrictionType, [z]);
   }
-  // prohibited per prima: la sua geometria fusa viene SOTTRATTA dalle altre
-  // categorie, così il rosso resta l'unico colore dove c'è divieto
   const ordered = [...byType.entries()].sort(([a], [b]) =>
     RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
   for (const [type, group] of ordered) {
@@ -217,15 +218,24 @@ export async function zonesToCategoryUnionAsync(zones: Zone[]): Promise<FeatureC
       }
       await new Promise((r) => setTimeout(r, 0)); // cedi il main thread tra i batch
     }
-    if (acc && type === 'prohibited') prohibitedUnion = acc;
-    if (acc && type !== 'prohibited' && prohibitedUnion) {
-      // il divieto buca le categorie meno severe (fallimenti → geometria intera)
+    if (!acc) continue; // fallback già emesso: non entra nella cascata
+    // ritaglio a cascata: via tutto ciò che è coperto da categorie più severe
+    let emit: Feature<Polygon | MultiPolygon> | null = acc;
+    if (carved) {
       try {
-        const cut = difference(featureCollection([acc, prohibitedUnion]));
-        acc = (cut as Feature<Polygon | MultiPolygon> | null) ?? acc;
-      } catch { /* conservativo: meglio un velo doppio che un buco */ }
+        emit = difference(featureCollection([acc, carved])) as
+          Feature<Polygon | MultiPolygon> | null;
+      } catch { emit = acc; }
     }
-    if (acc) features.push({ type: 'Feature', geometry: acc.geometry, properties: props });
+    // accumula la geometria INTERA (pre-ritaglio): le categorie successive
+    // devono essere bucate anche dove questa è a sua volta ritagliata
+    try {
+      carved = carved
+        ? ((union(featureCollection([carved, acc])) as Feature<Polygon | MultiPolygon> | null) ?? carved)
+        : acc;
+    } catch { /* carved resta com'è */ }
+    // emit null = categoria interamente coperta da più severe: nessuna feature
+    if (emit) features.push({ type: 'Feature', geometry: emit.geometry, properties: props });
   }
   return { type: 'FeatureCollection', features };
 }

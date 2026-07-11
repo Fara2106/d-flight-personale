@@ -23,7 +23,7 @@ export const RESTRICTION_ORDER: Record<RestrictionType, number> = {
  *  pieno solo dove il divieto è assoluto. none resta invisibile (evita
  *  l'effetto inglobamento, decisione 2026-07-10). */
 export const ZONE_FILL_OPACITY: Record<RestrictionType, number> = {
-  prohibited: 0.40, auth_required: 0.10, conditional: 0.08, none: 0,
+  prohibited: 0.35, auth_required: 0.07, conditional: 0.05, none: 0,
 };
 
 /** Bordi sottili e netti; gerarchia per severità. */
