@@ -33,3 +33,28 @@ it('il chip di "richiede autorizzazione" mostra il tratteggio della mappa', () =
   expect(chip).not.toBeNull();
   expect(chip.style.backgroundImage).toContain('repeating-linear-gradient');
 });
+
+describe('filtro categorie (feedback 2026-07-14: "non si capisce una mazza")', () => {
+  it('checkbox per nascondere arancio e giallo; il vietato NON è disattivabile', () => {
+    render(<Legend altitudes={ALTITUDES} hiddenTypes={[]} onToggleType={() => {}} />);
+    expect(screen.getByRole('checkbox', { name: /richiede autorizzazione/i })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /condizionato/i })).toBeChecked();
+    // vietato sempre visibile: niente checkbox (app conservativa)
+    expect(screen.queryByRole('checkbox', { name: /vietato/i })).toBeNull();
+  });
+
+  it('il toggle chiama onToggleType col tipo giusto e riflette hiddenTypes', () => {
+    const calls: string[] = [];
+    render(<Legend altitudes={ALTITUDES} hiddenTypes={['auth_required']}
+      onToggleType={(t) => calls.push(t)} />);
+    const box = screen.getByRole('checkbox', { name: /richiede autorizzazione/i });
+    expect(box).not.toBeChecked();
+    box.click();
+    expect(calls).toEqual(['auth_required']);
+  });
+
+  it('senza onToggleType (nessuna zona importata) niente checkbox: legenda statica', () => {
+    render(<Legend altitudes={ALTITUDES} />);
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+  });
+});

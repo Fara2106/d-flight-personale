@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildFillPaint, buildFillLayout, buildLinePaint, buildCatLinePaint,
+  buildCatFillPaint, typeVisibilityFilter,
   buildLabelLayout, severitySortKey, highlightFilter,
   labelDiffFilter, labelStandardFilter, hatchImage,
 } from '../../src/map/MapView';
@@ -84,6 +85,27 @@ describe('leggibilità zone sovrapposte', () => {
   });
 });
 
+describe('typeVisibilityFilter: nascondere categorie scelte dall\'utente (legenda)', () => {
+  it('senza categorie nascoste → il filtro base resta com\'è (null se assente)', () => {
+    expect(typeVisibilityFilter([])).toBeNull();
+    const base = ['==', ['get', 'x'], 1];
+    expect(typeVisibilityFilter([], base as never)).toEqual(base);
+  });
+
+  it('con categorie nascoste → esclude quei restrictionType', () => {
+    const f = typeVisibilityFilter(['auth_required']);
+    expect(f).toEqual(['!', ['in', ['get', 'restrictionType'], ['literal', ['auth_required']]]]);
+  });
+
+  it('combina il filtro base in AND con la visibilità', () => {
+    const base = ['==', ['get', 'labelPrimary'], true];
+    const f = typeVisibilityFilter(['conditional'], base as never) as unknown[];
+    expect(f[0]).toBe('all');
+    expect(f[1]).toEqual(base);
+    expect(JSON.stringify(f[2])).toContain('conditional');
+  });
+});
+
 describe('dedup fasce sulla mappa (bordi annidati + etichette duplicate)', () => {
   it('line-opacity: bordo pieno solo su bandPrimary, accennato sulle altre fasce', () => {
     const paint = buildLinePaint() as any;
@@ -111,10 +133,37 @@ describe('vista d\'insieme per categoria (caso Fiumicino, 2026-07-10)', () => {
     expect(ZONE_LABEL_ALL_MINZOOM).toBeGreaterThan(ZONE_DETAIL_MINZOOM);
   });
 
-  it('bordo di categoria: netto e ben visibile, colori dalla palette', () => {
+  it('bordo di categoria: colori dalla palette', () => {
     const paint = buildCatLinePaint() as any;
-    expect(paint['line-opacity']).toBeGreaterThanOrEqual(0.9);
     expect(JSON.stringify(paint['line-color'])).toContain(ZONE_COLORS.auth_required);
+  });
+
+  it('veli d\'insieme GRADUATI con lo zoom: all\'Italia intera resta leggibile solo il rosso', () => {
+    // feedback 2026-07-14: "con le aree non si capisce una mazza" — alla
+    // scala nazionale i veli arancio/giallo devono sparire quasi del tutto
+    // (resta il basemap + il vietato), e riprendere corpo salendo di zoom
+    const paint = buildCatFillPaint() as any;
+    const expr = paint['fill-opacity'] as unknown[];
+    expect(expr[0]).toBe('interpolate');
+    expect(expr[2]).toEqual(['zoom']);
+    const [lowStop, highStop] = [expr[4], expr[6]];
+    // stop basso (Italia intera): arancio quasi invisibile, rosso ben visibile
+    expect(evalMatch(lowStop, 'auth_required')).toBeLessThanOrEqual(0.03);
+    expect(evalMatch(lowStop, 'conditional')).toBeLessThanOrEqual(0.03);
+    expect(evalMatch(lowStop, 'prohibited')).toBeGreaterThanOrEqual(0.25);
+    // stop alto (vicino al dettaglio): i valori pieni di sempre
+    expect(evalMatch(highStop, 'auth_required')).toBe(0.07);
+    expect(evalMatch(highStop, 'prohibited')).toBe(0.35);
+  });
+
+  it('bordi d\'insieme graduati: niente ragnatela arancione all\'Italia intera', () => {
+    const paint = buildCatLinePaint() as any;
+    const expr = paint['line-opacity'] as unknown[];
+    expect(expr[0]).toBe('interpolate');
+    const [lowStop, highStop] = [expr[4], expr[6]];
+    expect(evalMatch(lowStop, 'auth_required')).toBeLessThanOrEqual(0.15);
+    expect(evalMatch(lowStop, 'prohibited')).toBeGreaterThanOrEqual(0.7);
+    expect(evalMatch(highStop, 'auth_required')).toBeGreaterThanOrEqual(0.9);
   });
 
   it('tratteggio diagonale: pattern RGBA col colore auth_required, il resto trasparente', () => {

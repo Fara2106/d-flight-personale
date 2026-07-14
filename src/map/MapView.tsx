@@ -117,13 +117,55 @@ export function buildLinePaint(): maplibregl.LineLayerSpecification['paint'] {
   };
 }
 
-/** Bordo della vista d'insieme: un solo contorno netto per categoria. */
+// Gradazione dei veli d'insieme con lo zoom (feedback 2026-07-14: all'Italia
+// intera "con le aree non si capisce una mazza"): alla scala nazionale
+// arancio/giallo quasi spariscono — restano basemap e vietato — e riprendono
+// corpo avvicinandosi alla scala di dettaglio.
+const CAT_FADE_LOW_ZOOM = 6.5, CAT_FADE_HIGH_ZOOM = 9.5;
+
+function zoomFade(
+  low: Record<RestrictionType, number>, high: Record<RestrictionType, number>,
+): maplibregl.ExpressionSpecification {
+  return ['interpolate', ['linear'], ['zoom'],
+    CAT_FADE_LOW_ZOOM, matchByType(low, 0),
+    CAT_FADE_HIGH_ZOOM, matchByType(high, 0)];
+}
+
+/** Velo della vista d'insieme: graduato con lo zoom (solo il rosso resta
+ *  ben visibile all'inquadratura nazionale). */
+export function buildCatFillPaint(): maplibregl.FillLayerSpecification['paint'] {
+  return {
+    'fill-color': zoneColorExpr(),
+    'fill-opacity': zoomFade(
+      { prohibited: 0.3, auth_required: 0.02, conditional: 0.015, none: 0 },
+      ZONE_FILL_OPACITY),
+  };
+}
+
+/** Bordo della vista d'insieme: un solo contorno per categoria, anch'esso
+ *  graduato (niente ragnatela arancione sull'Italia intera). */
 export function buildCatLinePaint(): maplibregl.LineLayerSpecification['paint'] {
   return {
     'line-color': zoneColorExpr(),
     'line-width': matchByType(ZONE_LINE_WIDTH, 1.2),
-    'line-opacity': 0.95,
+    'line-opacity': zoomFade(
+      { prohibited: 0.9, auth_required: 0.1, conditional: 0.1, none: 0 },
+      { prohibited: 0.95, auth_required: 0.95, conditional: 0.95, none: 0 }),
   };
+}
+
+/**
+ * Filtro di visibilità per categoria (checkbox in legenda): esclude i
+ * restrictionType nascosti dall'utente, combinandosi in AND con l'eventuale
+ * filtro base del layer. null = nessun filtro (tutto visibile).
+ */
+export function typeVisibilityFilter(
+  hidden: RestrictionType[], base?: maplibregl.FilterSpecification,
+): maplibregl.FilterSpecification | null {
+  if (hidden.length === 0) return base ?? null;
+  const vis = ['!', ['in', ['get', 'restrictionType'], ['literal', hidden]]] as
+    unknown as maplibregl.FilterSpecification;
+  return base ? (['all', base, vis] as unknown as maplibregl.FilterSpecification) : vis;
 }
 
 /** Etichette-eccezione: quota diversa dalla tipica di categoria (o non-AGL).
@@ -211,7 +253,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   // — vista d'INSIEME (zoom < soglia): categorie fuse, un velo + un bordo
   map.addLayer({ id: 'zones-cat-fill', type: 'fill', source: SRC_CAT,
     maxzoom: ZONE_DETAIL_MINZOOM,
-    layout: buildFillLayout(), paint: buildFillPaint() });
+    layout: buildFillLayout(), paint: buildCatFillPaint() });
   map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
     maxzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() });
@@ -257,14 +299,29 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     layout: buildLabelLayout(), paint: labelPaint });
 }
 
+/** Applica le categorie nascoste (checkbox in legenda) a tutti i layer zona.
+ *  zones-hit resta SENZA filtro: il popup continua a raccontare tutto quello
+ *  che c'è nel punto, anche ciò che è nascosto a schermo (app conservativa). */
+function applyTypeVisibility(map: maplibregl.Map, hidden: RestrictionType[]) {
+  const set = (id: string, base?: maplibregl.FilterSpecification) => {
+    if (map.getLayer(id)) map.setFilter(id, typeVisibilityFilter(hidden, base));
+  };
+  set('zones-cat-fill'); set('zones-cat-line');
+  set('zones-fill'); set('zones-line');
+  set('zones-hatch', HATCH_FILTER);
+  set('zones-label', labelDiffFilter());
+  set('zones-label-standard', labelStandardFilter());
+}
+
 export function MapView(
-  { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneId, onZoneFocus, verify, onVerifyPick }:
+  { resolvedTheme, zones, onZoneClick, userPosition, flyTo, highlightZoneId, onZoneFocus, verify, onVerifyPick, hiddenTypes }:
   { resolvedTheme: 'light' | 'dark'; zones: Zone[];
     onZoneClick?: (props: Record<string, unknown>) => void;
     userPosition?: GeoPosition | null;
     flyTo?: { lat: number; lon: number } | null;
     highlightZoneId?: string | null;
     onZoneFocus?: (id: string | null) => void;
+    hiddenTypes?: RestrictionType[];
     verify?: VerifyState | null;
     onVerifyPick?: (lat: number, lon: number) => void }
 ) {
@@ -279,6 +336,8 @@ export function MapView(
   verifyRef.current = verify ?? null;
   const onVerifyPickRef = useRef(onVerifyPick);
   onVerifyPickRef.current = onVerifyPick;
+  const hiddenRef = useRef<RestrictionType[]>(hiddenTypes ?? []);
+  hiddenRef.current = hiddenTypes ?? [];
 
   useEffect(() => {
     if (!el.current || map.current) return;
@@ -291,7 +350,10 @@ export function MapView(
     // test hook: consente a E2E/screenshot script di pilotare la camera
     (window as unknown as { __dflightMap?: maplibregl.Map }).__dflightMap = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    m.on('load', () => addZoneLayers(m, zonesRef.current, highlightRef.current));
+    m.on('load', () => {
+      addZoneLayers(m, zonesRef.current, highlightRef.current);
+      applyTypeVisibility(m, hiddenRef.current);
+    });
     // sfondo mappa offline: in prima sessione i worker MapLibre bypassano il
     // SW → warmiamo i tile della vista dal main thread a ogni assestamento
     // ('idle' garantisce che il tiles.json — e quindi i template — sia caricato)
@@ -324,6 +386,7 @@ export function MapView(
     m.setStyle(mapStyleUrl(resolvedTheme));
     m.once('styledata', () => {
       addZoneLayers(m, zonesRef.current, highlightRef.current);
+      applyTypeVisibility(m, hiddenRef.current);
       setVerifyLayers(m, verifyRef.current);
     });
   }, [resolvedTheme]);
@@ -331,6 +394,13 @@ export function MapView(
   useEffect(() => {
     const m = map.current; if (m && m.isStyleLoaded()) addZoneLayers(m, zones, highlightRef.current);
   }, [zones]);
+
+  // categorie nascoste dalla legenda (i layer potrebbero non esserci ancora:
+  // in quel caso ci pensa il callback di load/styledata con hiddenRef)
+  useEffect(() => {
+    const m = map.current;
+    if (m && m.getLayer('zones-cat-fill')) applyTypeVisibility(m, hiddenTypes ?? []);
+  }, [hiddenTypes]);
 
   useEffect(() => {
     highlightRef.current = highlightZoneId ?? null;

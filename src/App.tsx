@@ -22,7 +22,7 @@ import { useOnline } from './ui/useOnline';
 import { zonesAtPoint } from './verify/intersect';
 import { evaluate } from './rules/rulesEngine';
 import { categoryAltitudes } from './data/categoryAltitudes';
-import type { Zone, DatasetMeta } from './data/ed269.types';
+import type { Zone, DatasetMeta, RestrictionType } from './data/ed269.types';
 
 type VerifyUiState = { point: { lat: number; lon: number } | null; radiusM: number };
 
@@ -38,6 +38,8 @@ export default function App() {
   const [verify, setVerify] = useState<VerifyUiState | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [highlightZoneId, setHighlightZoneId] = useState<string | null>(null);
+  // categorie nascoste dalla legenda (solo visivo: popup e verdetto vedono tutto)
+  const [hiddenTypes, setHiddenTypes] = useState<RestrictionType[]>([]);
   const online = useOnline();
 
   useEffect(() => { (async () => {
@@ -77,7 +79,7 @@ export default function App() {
       <MapView resolvedTheme={resolved} zones={zones}
         userPosition={geo.position} flyTo={flyTo}
         highlightZoneId={highlightZoneId} onZoneFocus={setHighlightZoneId}
-        verify={verify} onVerifyPick={setPoint} />
+        verify={verify} onVerifyPick={setPoint} hiddenTypes={hiddenTypes} />
 
       <UpdateToast />
 
@@ -96,7 +98,10 @@ export default function App() {
         maxWidth:'calc(100vw - 140px)', alignItems:'flex-start' }}>
         {!online && <OfflineBanner />}
         <DataStatusBanner meta={meta} />
-        <Legend altitudes={altitudes} />
+        <Legend altitudes={altitudes}
+          hiddenTypes={hiddenTypes}
+          onToggleType={zones.length > 0 ? (t) => setHiddenTypes((h) =>
+            h.includes(t) ? h.filter((x) => x !== t) : [...h, t]) : undefined} />
         <Disclaimer />
       </div>
 

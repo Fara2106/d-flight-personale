@@ -27,9 +27,17 @@ function Chip({ type }: { type: RestrictionType }) {
   );
 }
 
-export function Legend({ altitudes }: {
+/** Categorie che l'utente può nascondere dalla mappa. Il vietato NON è
+ *  disattivabile (app conservativa); none non disegna nulla comunque. */
+const TOGGLABLE: RestrictionType[] = ['conditional', 'auth_required'];
+
+export function Legend({ altitudes, hiddenTypes, onToggleType }: {
   /** Quote tipiche per categoria dai dati importati (categoryAltitudes). */
   altitudes?: Record<RestrictionType, CatAltitude> | null;
+  /** Categorie momentaneamente nascoste sulla mappa. */
+  hiddenTypes?: RestrictionType[];
+  /** Se presente, le righe disattivabili mostrano una checkbox. */
+  onToggleType?: (t: RestrictionType) => void;
 }) {
   return (
     <details
@@ -45,10 +53,23 @@ export function Legend({ altitudes }: {
       <div className="mt-1">
         {ROWS.map(([k, label]) => {
           const quota = altitudes ? legendAltitudeText(k, altitudes[k]) : null;
+          const togglable = onToggleType && TOGGLABLE.includes(k);
           return (
             <div key={k} className="flex items-start gap-2 py-0.5">
+              {/* checkbox a SINISTRA: il bordo destro della legenda può finire
+                  sotto i bottoni Verifica/Importa sugli schermi stretti */}
+              {togglable && (
+                <input
+                  type="checkbox"
+                  aria-label={label}
+                  checked={!(hiddenTypes ?? []).includes(k)}
+                  onChange={() => onToggleType(k)}
+                  style={{ marginTop: 3, width: 16, height: 16, flex: 'none',
+                    accentColor: 'var(--accent)' }}
+                />
+              )}
               <Chip type={k} />
-              <span>
+              <span className="flex-1">
                 {label}
                 {quota && (
                   <span style={{ color: 'var(--text-muted)' }}> — {quota}</span>
