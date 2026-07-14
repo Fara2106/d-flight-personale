@@ -49,13 +49,23 @@ try {
   await page.locator('input[type=file]').first()
     .setInputFiles(join(root, 'e2e/fixture-ed269.json'));
   await page.getByText(/Dati aggiornati al/i).waitFor({ timeout: 10000 });
-  await page.getByRole('button', { name: /^profilo$/i }).click();
+  // il bottone Profilo non è più nel chrome (af1adbe): si apre dalla CTA
+  // "configura un drone" dentro la modalità Verifica, come in run.mjs
+  await waitMapIdle(page);
+  await page.getByRole('button', { name: /^verifica$/i }).click();
+  await page.getByText(/tocca un punto sulla mappa/i).waitFor();
+  await page.locator('.maplibregl-canvas').click({ position: { x: 640, y: 400 } });
+  await page.getByText(/configura un drone/i).waitFor();
+  await page.getByRole('button', { name: /apri profilo/i }).click();
   await page.getByLabel('Nome').fill('Mini');
   await page.getByLabel('Massa (g)').fill('249');
   await page.getByLabel('Classe').selectOption('sub250');
   await page.getByRole('button', { name: /aggiungi drone/i }).click();
   await page.getByRole('radio', { name: /attiva mini/i }).waitFor();
   await page.getByRole('button', { name: /chiudi profilo/i }).click();
+  // col profilo chiuso appare il verdetto per il punto toccato: esci dalla verifica
+  await page.getByRole('dialog', { name: /verdetto/i }).waitFor();
+  await page.getByRole('button', { name: /esci dalla verifica/i }).click();
   check('setup online: fixture importata + drone attivo', true);
 
   // 3. scenario iPhone (bug 2026-07-09): UNA sola sessione online, NIENTE
