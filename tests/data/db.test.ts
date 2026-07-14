@@ -7,9 +7,10 @@ declare const IDBFactory: any;
 
 beforeEach(() => { indexedDB = new IDBFactory(); });
 
-it('crea i quattro store al primo avvio', async () => {
+it('crea i cinque store al primo avvio', async () => {
   const d = await db();
-  expect([...d.objectStoreNames].sort()).toEqual(['drones', 'meta', 'settings', 'zones']);
+  expect([...d.objectStoreNames].sort())
+    .toEqual(['drones', 'meta', 'overlays', 'settings', 'zones']);
   d.close();
 });
 
@@ -24,7 +25,8 @@ it('migra un DB v1 esistente conservando le zone', async () => {
   v1.close();
 
   const d = await db();
-  expect([...d.objectStoreNames].sort()).toEqual(['drones', 'meta', 'settings', 'zones']);
+  expect([...d.objectStoreNames].sort())
+    .toEqual(['drones', 'meta', 'overlays', 'settings', 'zones']);
   expect(await d.get('zones', 'z1')).toMatchObject({ id: 'z1', name: 'Zona v1' });
   d.close();
 });

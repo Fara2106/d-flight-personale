@@ -1,11 +1,11 @@
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon, Position } from 'geojson';
 import { union } from '@turf/union';
-import { difference } from '@turf/difference';
 import { featureCollection, feature as toFeature } from '@turf/helpers';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 import { altitudeLabel } from './altitudeLabel';
 import { categoryAltitudes } from '../data/categoryAltitudes';
 import { RESTRICTION_ORDER } from './mapStyle';
+import { categoryMosaic } from './fastUnion';
 
 /**
  * Area planare approssimata (shoelace sugli anelli esterni, gradi²): serve
@@ -163,79 +163,14 @@ export async function zonesToUnionGeoJSONAsync(zones: Zone[]): Promise<FeatureCo
 }
 
 /**
- * Vista d'INSIEME per gli zoom bassi (caso Fiumicino, 2026-07-10): tutte le
- * zone di una categoria fuse in un solo poligono, e le categorie ritagliate a
- * CASCATA (feedback 2026-07-11): da ogni categoria viene sottratta l'unione
- * di TUTTE le più restrittive → un mosaico piatto di regioni disgiunte, ogni
- * punto mostra un solo colore (il più severo). Union incrementale a batch con
- * yield del main thread. Fallback conservativi: se un'union di batch fallisce
- * le geometrie del batch restano separate; se un ritaglio fallisce la
- * categoria resta intera (meglio un velo doppio che un buco).
+ * Vista d'INSIEME per gli zoom bassi (caso Fiumicino, 2026-07-10): mosaico
+ * piatto per categoria con ritaglio a cascata — la geometria la fa
+ * categoryMosaic (fastUnion). Questo wrapper è il FALLBACK per ambienti senza
+ * Web Worker (test jsdom, browser antichi): cede il main thread una volta
+ * prima del calcolo, poi calcola in blocco. Nel percorso normale il mosaico
+ * arriva dal worker (overlayWorkerClient) o dalla cache IndexedDB.
  */
 export async function zonesToCategoryUnionAsync(zones: Zone[]): Promise<FeatureCollection> {
-  const features: Feature[] = [];
-  // unione progressiva delle categorie più severe già emesse (per il ritaglio)
-  let carved: Feature<Polygon | MultiPolygon> | null = null;
-  const byType = new Map<RestrictionType, Zone[]>();
-  for (const z of zones) {
-    const g = byType.get(z.restrictionType);
-    if (g) g.push(z); else byType.set(z.restrictionType, [z]);
-  }
-  const ordered = [...byType.entries()].sort(([a], [b]) =>
-    RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
-  for (const [type, group] of ordered) {
-    const props = { restrictionType: type, catUnion: true };
-    // dedup geometrie identiche (doppioni D-Flight): meno lavoro per l'union
-    const seen = new Set<string>();
-    const geoms = group
-      .map((z) => z.geometry)
-      .filter((g): g is Polygon | MultiPolygon =>
-        g.type === 'Polygon' || g.type === 'MultiPolygon')
-      .filter((g) => {
-        const k = JSON.stringify(g.coordinates);
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
-    if (geoms.length === 0) continue;
-    let acc: Feature<Polygon | MultiPolygon> | null = null;
-    const BATCH = 16;
-    for (let i = 0; i < geoms.length; i += BATCH) {
-      const batch = geoms.slice(i, i + BATCH).map((g) => toFeature(g));
-      try {
-        const parts: Feature<Polygon | MultiPolygon>[] = acc ? [acc, ...batch] : batch;
-        acc = parts.length > 1
-          ? (union(featureCollection(parts)) as Feature<Polygon | MultiPolygon> | null)
-          : parts[0];
-        if (!acc) throw new Error('union nulla');
-      } catch {
-        // batch indigesto: emetti l'accumulato e le geometrie così come sono
-        if (acc) features.push({ type: 'Feature', geometry: acc.geometry, properties: props });
-        for (const g of geoms.slice(i, i + BATCH)) {
-          features.push({ type: 'Feature', geometry: g, properties: props });
-        }
-        acc = null;
-      }
-      await new Promise((r) => setTimeout(r, 0)); // cedi il main thread tra i batch
-    }
-    if (!acc) continue; // fallback già emesso: non entra nella cascata
-    // ritaglio a cascata: via tutto ciò che è coperto da categorie più severe
-    let emit: Feature<Polygon | MultiPolygon> | null = acc;
-    if (carved) {
-      try {
-        emit = difference(featureCollection([acc, carved])) as
-          Feature<Polygon | MultiPolygon> | null;
-      } catch { emit = acc; }
-    }
-    // accumula la geometria INTERA (pre-ritaglio): le categorie successive
-    // devono essere bucate anche dove questa è a sua volta ritagliata
-    try {
-      carved = carved
-        ? ((union(featureCollection([carved, acc])) as Feature<Polygon | MultiPolygon> | null) ?? carved)
-        : acc;
-    } catch { /* carved resta com'è */ }
-    // emit null = categoria interamente coperta da più severe: nessuna feature
-    if (emit) features.push({ type: 'Feature', geometry: emit.geometry, properties: props });
-  }
-  return { type: 'FeatureCollection', features };
+  await new Promise((r) => setTimeout(r, 0));
+  return categoryMosaic(zones);
 }

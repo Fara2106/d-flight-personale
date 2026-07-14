@@ -3,7 +3,9 @@ import { isStale } from './isStale';
 
 export function DataStatusBanner({ meta }: { meta: DatasetMeta | null }) {
   if (!meta) return null;
-  const stale = isStale(meta.cycleDate, new Date());
+  // il file D-Flight reale non ha una data interna (cycleDate): in quel caso
+  // la staleness si misura dalla data di import (mai avvisare il giorno stesso)
+  const stale = isStale(meta.cycleDate ?? meta.importedAt, new Date());
   const when = meta.cycleDate ?? new Date(meta.importedAt).toLocaleDateString('it-IT');
   return (
     <div

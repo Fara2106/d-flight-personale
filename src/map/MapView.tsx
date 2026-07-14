@@ -6,9 +6,8 @@ import {
   ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
   ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM,
 } from './mapStyle';
-import {
-  zonesToGeoJSON, zonesToUnionGeoJSONAsync, zonesToCategoryUnionAsync,
-} from './zonesToGeoJSON';
+import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
+import { categoryMosaicFor } from './categoryOverlay';
 import { buildPopupContent } from './popupContent';
 import { wireMapIdleFlag } from './mapIdleFlag';
 import { circleFeature } from '../verify/verifyLayers';
@@ -194,7 +193,10 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     });
   };
   swapWhenReady(SRC_RENDER, zonesToUnionGeoJSONAsync(zones));
-  swapWhenReady(SRC_CAT, zonesToCategoryUnionAsync(zones));
+  // mosaico d'insieme: dalla cache IndexedDB se il dataset è già stato
+  // lavorato, altrimenti calcolato nel worker (sul file reale ~15-20s la
+  // prima volta; nel frattempo restano le fasce così come sono)
+  swapWhenReady(SRC_CAT, categoryMosaicFor(zones));
   if (map.getSource(SRC)) {
     (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
     (map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource).setData(data);

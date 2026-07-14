@@ -50,8 +50,10 @@ export function categoryAltitudes(zones: Zone[]): Record<RestrictionType, CatAlt
 
 /** Dicitura per la riga di legenda; null = non mostrare nulla. */
 export function legendAltitudeText(t: RestrictionType, a: CatAltitude): string | null {
+  // vietato = vietato, qualunque quota dica il file (il D-Flight reale usa
+  // anche la sentinella 9999999 per "illimitato": mai mostrarla)
+  if (t === 'prohibited') return a.count === 0 ? null : 'non si vola';
   if (a.count === 0 || a.modeM == null) return null;
-  if (t === 'prohibited' && a.modeM === 0) return 'non si vola';
   if (a.uniform) return `di norma fino a ${a.modeM} m`;
   return `${a.minM}–${a.maxM} m — variabile, tocca la zona`;
 }

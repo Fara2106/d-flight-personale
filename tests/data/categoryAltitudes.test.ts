@@ -52,6 +52,14 @@ describe('legendAltitudeText: dicitura onesta per la legenda', () => {
       { modeM: 0, minM: 0, maxM: 0, count: 3, uniform: true });
     expect(t).toMatch(/non si vola|divieto/i);
   });
+  it('vietato con quote variabili (file reale, sentinella 9999999) → SEMPRE divieto, mai il range', () => {
+    // il file D-Flight reale ha zone vietate con upperLimit 5..9999999:
+    // mostrare "5–9999999 m" in legenda è insensato — vietato = non si vola
+    const t = legendAltitudeText('prohibited',
+      { modeM: 500, minM: 5, maxM: 9999999, count: 765, uniform: false });
+    expect(t).toMatch(/non si vola|divieto/i);
+    expect(t).not.toMatch(/9999999/);
+  });
   it('uniforme → "fino a X m"', () => {
     const t = legendAltitudeText('auth_required',
       { modeM: 120, minM: 60, maxM: 120, count: 10, uniform: true });
