@@ -8,6 +8,7 @@ import {
 } from './mapStyle';
 import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
 import { categoryMosaicFor } from './categoryOverlay';
+import { firstSymbolLayerId, placeLabelBoosts } from './basemapLabels';
 import { buildPopupContent } from './popupContent';
 import { wireMapIdleFlag } from './mapIdleFlag';
 import { circleFeature } from '../verify/verifyLayers';
@@ -246,6 +247,10 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     return;
   }
   ensureHatchImage(map);
+  // le zone vanno SOTTO le etichette del basemap: i nomi dei luoghi restano
+  // leggibili sopra i veli (feedback 2026-07-14). Le etichette-quota nostre
+  // restano invece in cima (priorità nelle collisioni: sono info di sicurezza).
+  const beforeId = firstSymbolLayerId(map.getStyle().layers ?? []);
   map.addSource(SRC, { type: 'geojson', data });
   map.addSource(SRC_RENDER, { type: 'geojson', data });
   map.addSource(SRC_CAT, { type: 'geojson', data });
@@ -253,18 +258,18 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   // — vista d'INSIEME (zoom < soglia): categorie fuse, un velo + un bordo
   map.addLayer({ id: 'zones-cat-fill', type: 'fill', source: SRC_CAT,
     maxzoom: ZONE_DETAIL_MINZOOM,
-    layout: buildFillLayout(), paint: buildCatFillPaint() });
+    layout: buildFillLayout(), paint: buildCatFillPaint() }, beforeId);
   map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
     maxzoom: ZONE_DETAIL_MINZOOM,
-    layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() });
+    layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() }, beforeId);
 
   // — DETTAGLIO (zoom ≥ soglia): zone per nome, bordi propri
   map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC_RENDER,
     minzoom: ZONE_DETAIL_MINZOOM,
-    layout: buildFillLayout(), paint: buildFillPaint() });
+    layout: buildFillLayout(), paint: buildFillPaint() }, beforeId);
   map.addLayer({ id: 'zones-line', type: 'line', source: SRC_RENDER,
     minzoom: ZONE_DETAIL_MINZOOM,
-    layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() });
+    layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() }, beforeId);
 
   // — tratteggio "richiede autorizzazione": indica la CATEGORIA (sorgente
   //   fusa: mai raddoppiato, niente moiré) ma SOLO alla scala di dettaglio —
@@ -272,19 +277,19 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   //   lì resta il velo piatto leggerissimo (feedback 2026-07-11)
   map.addLayer({ id: 'zones-hatch', type: 'fill', source: SRC_CAT,
     minzoom: ZONE_DETAIL_MINZOOM, filter: HATCH_FILTER,
-    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.3 } });
+    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.3 } }, beforeId);
 
   // layer di hit trasparente sulle FASCE: il popup ha bisogno delle proprietà
   // per-fascia (quote, message, reasons) che le sorgenti fuse non hanno
   map.addLayer({ id: 'zones-hit', type: 'fill', source: SRC,
-    paint: { 'fill-color': '#000000', 'fill-opacity': 0 } });
+    paint: { 'fill-color': '#000000', 'fill-opacity': 0 } }, beforeId);
   // velo + bordo blu sulla zona aperta nell'accordion: emerge dalla pila
   map.addLayer({ id: 'zones-highlight-fill', type: 'fill', source: SRC,
     filter: highlightFilter(highlightId),
-    paint: { 'fill-color': '#0a84ff', 'fill-opacity': 0.18 } });
+    paint: { 'fill-color': '#0a84ff', 'fill-opacity': 0.18 } }, beforeId);
   map.addLayer({ id: 'zones-highlight', type: 'line', source: SRC,
     filter: highlightFilter(highlightId),
-    paint: { 'line-color': '#0a84ff', 'line-width': 3 } });
+    paint: { 'line-color': '#0a84ff', 'line-width': 3 } }, beforeId);
 
   // — etichette-quota: le eccezioni alla scala di dettaglio; quelle standard
   //   solo al dettaglio fine (la quota tipica sta in legenda)
@@ -297,6 +302,18 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   map.addLayer({ id: 'zones-label-standard', type: 'symbol', source: SRC,
     minzoom: ZONE_LABEL_ALL_MINZOOM, filter: labelStandardFilter(),
     layout: buildLabelLayout(), paint: labelPaint });
+}
+
+/** Anticipa le etichette place del basemap (~1.5 livelli di zoom): più nomi
+ *  di città e paesi a parità di inquadratura. Difensivo: se lo stile non ha
+ *  quei layer (mock E2E) non fa nulla. */
+function boostPlaceLabels(map: maplibregl.Map) {
+  for (const b of placeLabelBoosts(map.getStyle().layers ?? [])) {
+    try {
+      const maxzoom = map.getLayer(b.id)?.maxzoom ?? 24;
+      map.setLayerZoomRange(b.id, b.minzoom, maxzoom);
+    } catch { /* layer sparito nel frattempo: pazienza */ }
+  }
 }
 
 /** Applica le categorie nascoste (checkbox in legenda) a tutti i layer zona.
@@ -351,6 +368,7 @@ export function MapView(
     (window as unknown as { __dflightMap?: maplibregl.Map }).__dflightMap = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => {
+      boostPlaceLabels(m);
       addZoneLayers(m, zonesRef.current, highlightRef.current);
       applyTypeVisibility(m, hiddenRef.current);
     });
@@ -385,6 +403,7 @@ export function MapView(
     const m = map.current; if (!m) return;
     m.setStyle(mapStyleUrl(resolvedTheme));
     m.once('styledata', () => {
+      boostPlaceLabels(m);
       addZoneLayers(m, zonesRef.current, highlightRef.current);
       applyTypeVisibility(m, hiddenRef.current);
       setVerifyLayers(m, verifyRef.current);
