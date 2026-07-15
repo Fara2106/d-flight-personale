@@ -34,6 +34,14 @@ it('il chip di "richiede autorizzazione" mostra il tratteggio della mappa', () =
   expect(chip.style.backgroundImage).toContain('repeating-linear-gradient');
 });
 
+describe('spiegazione sovrapposizioni (feedback 2026-07-15: "non capisco le aree accavallate")', () => {
+  it('la legenda dice cosa significa quando le aree si sovrappongono', () => {
+    render(<Legend altitudes={ALTITUDES} />);
+    expect(screen.getByText(/si sovrappongono/i)).toBeInTheDocument();
+    expect(screen.getByText(/più severa/i)).toBeInTheDocument();
+  });
+});
+
 describe('filtro categorie (feedback 2026-07-14: "non si capisce una mazza")', () => {
   it('checkbox per nascondere arancio e giallo; il vietato NON è disattivabile', () => {
     render(<Legend altitudes={ALTITUDES} hiddenTypes={[]} onToggleType={() => {}} />);

@@ -78,6 +78,12 @@ export function Legend({ altitudes, hiddenTypes, onToggleType }: {
             </div>
           );
         })}
+        <p className="mt-1.5 pt-1.5 text-xs" style={{ color: 'var(--text-muted)',
+          borderTop: '1px solid color-mix(in srgb, currentColor 20%, transparent)' }}>
+          Più aree possono coprire lo stesso punto: il colore mostra la regola
+          più severa. Dove i contorni si sovrappongono, tocca il punto per
+          l'elenco completo delle zone.
+        </p>
       </div>
     </details>
   );

@@ -95,15 +95,6 @@ export function severitySortKey(): maplibregl.ExpressionSpecification {
   return matchByType({ prohibited: 3, auth_required: 2, conditional: 1, none: 0 }, 0);
 }
 
-export function buildFillPaint(): maplibregl.FillLayerSpecification['paint'] {
-  return {
-    'fill-color': zoneColorExpr(),
-    // opacità per severità: i veli leggeri delle zone innocue non sommano
-    // macchie scure sulle pile di zone sovrapposte
-    'fill-opacity': matchByType(ZONE_FILL_OPACITY, 0.2),
-  };
-}
-
 export function buildFillLayout(): maplibregl.FillLayerSpecification['layout'] {
   return { 'fill-sort-key': severitySortKey() };
 }
@@ -255,18 +246,18 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   map.addSource(SRC_RENDER, { type: 'geojson', data });
   map.addSource(SRC_CAT, { type: 'geojson', data });
 
-  // — vista d'INSIEME (zoom < soglia): categorie fuse, un velo + un bordo
+  // — VELO: sempre dal mosaico per categoria, a OGNI zoom — ogni punto un
+  //   solo colore (la regola più severa). I veli per-zona si sommavano nelle
+  //   sovrapposizioni creando macchie scure indecifrabili (feedback
+  //   2026-07-15: "non capisco le aree accavallate che significhi")
   map.addLayer({ id: 'zones-cat-fill', type: 'fill', source: SRC_CAT,
-    maxzoom: ZONE_DETAIL_MINZOOM,
     layout: buildFillLayout(), paint: buildCatFillPaint() }, beforeId);
   map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
     maxzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() }, beforeId);
 
-  // — DETTAGLIO (zoom ≥ soglia): zone per nome, bordi propri
-  map.addLayer({ id: 'zones-fill', type: 'fill', source: SRC_RENDER,
-    minzoom: ZONE_DETAIL_MINZOOM,
-    layout: buildFillLayout(), paint: buildFillPaint() }, beforeId);
+  // — DETTAGLIO (zoom ≥ soglia): i BORDI delle singole zone (per nome), per
+  //   capire i confini; il colore resta piatto dal mosaico
   map.addLayer({ id: 'zones-line', type: 'line', source: SRC_RENDER,
     minzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() }, beforeId);
@@ -324,7 +315,7 @@ function applyTypeVisibility(map: maplibregl.Map, hidden: RestrictionType[]) {
     if (map.getLayer(id)) map.setFilter(id, typeVisibilityFilter(hidden, base));
   };
   set('zones-cat-fill'); set('zones-cat-line');
-  set('zones-fill'); set('zones-line');
+  set('zones-line');
   set('zones-hatch', HATCH_FILTER);
   set('zones-label', labelDiffFilter());
   set('zones-label-standard', labelStandardFilter());

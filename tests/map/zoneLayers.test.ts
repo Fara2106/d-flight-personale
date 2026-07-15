@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  buildFillPaint, buildFillLayout, buildLinePaint, buildCatLinePaint,
+  buildFillLayout, buildLinePaint, buildCatLinePaint,
   buildCatFillPaint, typeVisibilityFilter,
   buildLabelLayout, severitySortKey, highlightFilter,
   labelDiffFilter, labelStandardFilter, hatchImage,
@@ -20,7 +20,7 @@ function evalMatch(expr: unknown, value: string): number {
 }
 
 it('maps restriction types to colors via a data-driven expression', () => {
-  const paint = buildFillPaint() as any;
+  const paint = buildCatFillPaint() as any;
   const expr = JSON.stringify(paint['fill-color']);
   expect(expr).toContain('prohibited');
   expect(expr).toContain(ZONE_COLORS.prohibited);
@@ -39,17 +39,17 @@ describe('leggibilità zone sovrapposte', () => {
     expect(RESTRICTION_ORDER.none).toBe(3);
   });
 
-  it('fill-opacity decrescente con la severità: il verde è invisibile per evitare effetto "inglobamento"', () => {
-    const paint = buildFillPaint() as any;
-    const op = (t: string) => evalMatch(paint['fill-opacity'], t);
+  it('fill-opacity decrescente con la severità (stop alto del velo unico): none invisibile', () => {
+    // dal 2026-07-15 il velo è UNO solo (mosaico per categoria a ogni zoom):
+    // niente più veli per-zona che si sommano in macchie scure
+    const paint = buildCatFillPaint() as any;
+    const high = (paint['fill-opacity'] as unknown[])[6];
+    const op = (t: string) => evalMatch(high, t);
     expect(op('prohibited')).toBeGreaterThan(op('auth_required'));
     expect(op('auth_required')).toBeGreaterThan(op('conditional'));
     expect(op('conditional')).toBeGreaterThan(op('none'));
     expect(op('prohibited')).toBeLessThanOrEqual(0.5); // resta un overlay, non copre la mappa
-    // Le zone "none" sono invisibili (opacità 0): non inglobano visivamente altre zone
     expect(op('none')).toBe(0);
-    // riempimenti LEGGERI (feedback 2026-07-10): la mappa base resta leggibile;
-    // il colore quasi pieno solo dove il divieto è assoluto
     expect(op('auth_required')).toBeLessThanOrEqual(0.15);
     expect(op('conditional')).toBeLessThanOrEqual(0.12);
   });
