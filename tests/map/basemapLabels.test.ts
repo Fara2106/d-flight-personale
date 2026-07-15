@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { firstSymbolLayerId, placeLabelBoosts } from '../../src/map/basemapLabels';
+import {
+  firstSymbolLayerId, placeLabelBoosts, darkWaterTweaks,
+} from '../../src/map/basemapLabels';
 
 const LAYERS = [
   { id: 'background', type: 'background' },
@@ -35,5 +37,31 @@ describe('placeLabelBoosts: più nomi di luoghi a parità di zoom', () => {
     expect(ids).not.toContain('place_state');
     expect(ids).not.toContain('place_continent');
     expect(ids).not.toContain('roadname');
+  });
+});
+
+describe('darkWaterTweaks: mare blu notte in tema scuro (feedback 2026-07-15)', () => {
+  const DARK = [
+    { id: 'background', type: 'background', paint: { 'background-color': '#0e0e0e' } },
+    { id: 'water', type: 'fill', 'source-layer': 'water', paint: { 'fill-color': '#2C353C' } },
+    { id: 'water_shadow', type: 'fill', 'source-layer': 'water', paint: { 'fill-color': 'transparent' } },
+    { id: 'waterway', type: 'line', 'source-layer': 'waterway', paint: { 'line-color': 'rgba(63, 90, 109, 1)' } },
+    { id: 'roads', type: 'line', 'source-layer': 'transportation', paint: { 'line-color': '#222' } },
+  ] as never[];
+
+  it('il mare grigio diventa blu; i corsi d\'acqua con lui', () => {
+    const tweaks = Object.fromEntries(
+      darkWaterTweaks(DARK).map((t) => [t.id, t]));
+    expect(tweaks.water.property).toBe('fill-color');
+    expect(tweaks.water.value).toMatch(/^#/);
+    expect(tweaks.water.value).not.toBe('#2C353C');
+    expect(tweaks.waterway.property).toBe('line-color');
+  });
+
+  it('NON tocca il layer ombra trasparente né i layer non-acqua', () => {
+    const ids = darkWaterTweaks(DARK).map((t) => t.id);
+    expect(ids).not.toContain('water_shadow');
+    expect(ids).not.toContain('roads');
+    expect(ids).not.toContain('background');
   });
 });

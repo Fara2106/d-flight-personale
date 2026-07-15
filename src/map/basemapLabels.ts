@@ -12,6 +12,30 @@ export function firstSymbolLayerId(layers: LayerSpecification[]): string | undef
 
 export interface LabelBoost { id: string; minzoom: number }
 
+export interface PaintTweak { id: string; property: string; value: string }
+
+// Mare/laghi del Dark Matter: grigio #2C353C, quasi indistinguibile dalla
+// terra nera → la sagoma dell'Italia si perde (feedback 2026-07-15). In tema
+// scuro si passa a un blu notte, come le mappe iOS scure.
+const DARK_WATER = '#16324c';
+const DARK_WATERWAY = '#2b567e';
+
+/** Ritocchi acqua per il tema scuro: mare blu notte, corsi d'acqua con lui.
+ *  Il layer-ombra trasparente resta trasparente. Tema chiaro: mai chiamata. */
+export function darkWaterTweaks(layers: LayerSpecification[]): PaintTweak[] {
+  const out: PaintTweak[] = [];
+  for (const l of layers) {
+    const sourceLayer = (l as { 'source-layer'?: string })['source-layer'];
+    const paint = (l as { paint?: Record<string, unknown> }).paint ?? {};
+    if (l.type === 'fill' && sourceLayer === 'water' && paint['fill-color'] !== 'transparent') {
+      out.push({ id: l.id, property: 'fill-color', value: DARK_WATER });
+    } else if (l.type === 'line' && sourceLayer === 'waterway') {
+      out.push({ id: l.id, property: 'line-color', value: DARK_WATERWAY });
+    }
+  }
+  return out;
+}
+
 /** Etichette place da anticipare: solo quelle con minzoom ≥ 6 (città, paesi,
  *  sobborghi, frazioni). Stati/continenti compaiono già prestissimo.
  *  Anticipo di 2 livelli: la sonda sui tile CARTO (2026-07-14) mostra che i

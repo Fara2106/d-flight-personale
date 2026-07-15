@@ -8,7 +8,7 @@ import {
 } from './mapStyle';
 import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
 import { categoryMosaicFor } from './categoryOverlay';
-import { firstSymbolLayerId, placeLabelBoosts } from './basemapLabels';
+import { firstSymbolLayerId, placeLabelBoosts, darkWaterTweaks } from './basemapLabels';
 import { buildPopupContent } from './popupContent';
 import { wireMapIdleFlag } from './mapIdleFlag';
 import { circleFeature } from '../verify/verifyLayers';
@@ -295,7 +295,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
     layout: buildLabelLayout(), paint: labelPaint });
 }
 
-/** Anticipa le etichette place del basemap (~1.5 livelli di zoom): più nomi
+/** Anticipa le etichette place del basemap (~2 livelli di zoom): più nomi
  *  di città e paesi a parità di inquadratura. Difensivo: se lo stile non ha
  *  quei layer (mock E2E) non fa nulla. */
 function boostPlaceLabels(map: maplibregl.Map) {
@@ -303,6 +303,17 @@ function boostPlaceLabels(map: maplibregl.Map) {
     try {
       const maxzoom = map.getLayer(b.id)?.maxzoom ?? 24;
       map.setLayerZoomRange(b.id, b.minzoom, maxzoom);
+    } catch { /* layer sparito nel frattempo: pazienza */ }
+  }
+}
+
+/** In tema scuro il mare del Dark Matter è grigio-terra: la sagoma della
+ *  costa si perde. Lo si porta a un blu notte (solo dark; chiaro intatto). */
+function tuneDarkWater(map: maplibregl.Map, theme: 'light' | 'dark') {
+  if (theme !== 'dark') return;
+  for (const t of darkWaterTweaks(map.getStyle().layers ?? [])) {
+    try {
+      map.setPaintProperty(t.id, t.property as never, t.value);
     } catch { /* layer sparito nel frattempo: pazienza */ }
   }
 }
@@ -360,6 +371,7 @@ export function MapView(
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => {
       boostPlaceLabels(m);
+      tuneDarkWater(m, resolvedTheme);
       addZoneLayers(m, zonesRef.current, highlightRef.current);
       applyTypeVisibility(m, hiddenRef.current);
     });
@@ -395,6 +407,7 @@ export function MapView(
     m.setStyle(mapStyleUrl(resolvedTheme));
     m.once('styledata', () => {
       boostPlaceLabels(m);
+      tuneDarkWater(m, resolvedTheme);
       addZoneLayers(m, zonesRef.current, highlightRef.current);
       applyTypeVisibility(m, hiddenRef.current);
       setVerifyLayers(m, verifyRef.current);
