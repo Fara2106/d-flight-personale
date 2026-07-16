@@ -35,42 +35,53 @@ html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text);
   font-family: -apple-system, system-ui, 'SF Pro', sans-serif; }
 
-/* Popup MapLibre — segue i token tema (default libreria: bianco fisso).
-   Prefisso :root per vincere in specificità su maplibre-gl.css, che nel grafo
-   dei moduli viene importato DOPO questo file (MapView) e a parità di
-   specificità riprenderebbe il bianco fisso. */
+/* Popup MapLibre — vetro come il resto del chrome (default libreria: bianco
+   fisso). Prefisso :root per vincere in specificità su maplibre-gl.css, che
+   nel grafo dei moduli viene importato DOPO questo file (MapView) e a parità
+   di specificità riprenderebbe il bianco fisso. */
 :root .maplibregl-popup-content {
-  background: var(--surface);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   color: var(--text);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 10px 14px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 12px 16px;
   font-family: inherit;
 }
 :root .maplibregl-popup-close-button {
   color: var(--text-muted);
   font-size: 16px;
-  padding: 2px 6px;
+  padding: 2px 8px;
+  border-radius: 50%;
 }
+/* la freccetta segue il colore vetro (senza blur: è un triangolo di border) */
 :root .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
 :root .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-:root .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--surface); }
+:root .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--glass-bg); }
 :root .maplibregl-popup-anchor-top .maplibregl-popup-tip,
 :root .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-:root .maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--surface); }
-:root .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface); }
-:root .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface); }
+:root .maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--glass-bg); }
+:root .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--glass-bg); }
+:root .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--glass-bg); }
+@media (prefers-reduced-motion: no-preference) {
+  :root .maplibregl-popup { animation: pop-in 0.18s var(--ease-out); }
+}
 
 /* Contenuto popup multi-zona (accordion) */
-.zone-popup { max-height: 240px; overflow-y: auto; min-width: 200px; }
-.zone-popup-item + .zone-popup-item { border-top: 1px solid rgba(138, 147, 160, 0.25); }
-.zone-popup-head { display: flex; gap: 8px; align-items: center; width: 100%;
-  padding: 6px 0; background: none; border: 0; color: inherit; font: inherit;
+.zone-popup { max-height: 260px; overflow-y: auto; min-width: 210px; }
+.zone-popup-item + .zone-popup-item {
+  border-top: 1px solid color-mix(in srgb, var(--text-muted) 22%, transparent); }
+.zone-popup-head { display: flex; gap: 9px; align-items: center; width: 100%;
+  padding: 8px 0; background: none; border: 0; color: inherit; font: inherit;
   text-align: left; cursor: pointer; }
-.zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-.zone-popup-detail { padding: 0 0 8px 18px; color: var(--text-muted); }
-.zone-popup-plain { color: var(--text); font-weight: 600; margin: 2px 0 4px; }
-.zone-popup-tech { margin-top: 6px; font-size: 12px; }
+.zone-popup-dot { width: 10px; height: 10px; border-radius: 50%; flex: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent); }
+.zone-popup-detail { padding: 0 0 10px 19px; color: var(--text-muted);
+  line-height: 1.45; }
+.zone-popup-plain { color: var(--text); font-weight: 600; margin: 2px 0 5px; }
+.zone-popup-tech { margin-top: 7px; font-size: 12px; }
 .zone-popup-tech summary { cursor: pointer; color: var(--text-muted); user-select: none; }
 .zone-popup-tech > div { padding-left: 12px; }
 
