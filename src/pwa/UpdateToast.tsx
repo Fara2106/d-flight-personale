@@ -6,15 +6,10 @@ export function UpdateToast() {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   if (!needRefresh) return null;
   return (
-    <div role="status"
-      className="rounded-xl px-4 py-2 text-sm"
-      style={{ position: 'absolute', top: 64, left: '50%', transform: 'translateX(-50%)',
-        background: 'var(--surface)', color: 'var(--text)', boxShadow: 'var(--shadow)',
-        display: 'flex', gap: 12, alignItems: 'center', zIndex: 40 }}>
+    <div role="status" className="glass-panel update-toast text-sm">
       Nuova versione disponibile
       <button onClick={() => { void updateServiceWorker(true); }}
-        className="rounded-lg px-3 py-1 text-sm font-semibold text-white"
-        style={{ background: 'var(--accent)' }}>
+        className="btn-accent press px-3 py-1 text-sm">
         Aggiorna
       </button>
     </div>

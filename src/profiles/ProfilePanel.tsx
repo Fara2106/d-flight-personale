@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { C_CLASS_LABELS, type CClass, type Pilot } from './profile.types';
 import type { UseProfiles } from './useProfiles';
+import { CloseIcon } from '../ui/icons';
 
 const EMPTY = { name: '', massGrams: '', cClass: 'sub250' as CClass };
 
@@ -39,13 +40,14 @@ export function ProfilePanel(
   }
 
   return (
-    <div role="dialog" aria-label="Profilo" className="rounded-2xl p-4"
-      style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)',
+    <div role="dialog" aria-label="Profilo" className="glass-panel anim-pop p-4"
+      style={{ borderRadius: 'var(--radius-sheet)',
         width: '100%', maxWidth: 440, maxHeight: '85vh', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <strong style={{ fontSize: 18 }}>Profilo</strong>
-        <button onClick={onClose} aria-label="Chiudi profilo"
-          style={{ color: 'var(--text-muted)', fontSize: 18 }}>✕</button>
+        <button onClick={onClose} aria-label="Chiudi profilo" className="icon-btn">
+          <CloseIcon size={16} />
+        </button>
       </div>
 
       <h3 className="text-sm font-semibold" style={{ marginTop: 12 }}>I miei droni</h3>
@@ -80,25 +82,24 @@ export function ProfilePanel(
         <label className="text-sm">Nome{' '}
           <input value={draft.name} aria-label="Nome"
             onChange={e => setDraft({ ...draft, name: e.target.value })}
-            className="rounded px-2 py-1" style={{ border: '1px solid var(--text-muted)', background: 'transparent', width: '100%' }} />
+            className="field text-sm" style={{ width: '100%' }} />
         </label>
         <label className="text-sm">Massa (g){' '}
           <input type="number" value={draft.massGrams} aria-label="Massa (g)"
             onChange={e => setDraft({ ...draft, massGrams: e.target.value })}
-            className="rounded px-2 py-1" style={{ border: '1px solid var(--text-muted)', background: 'transparent', width: '100%' }} />
+            className="field text-sm" style={{ width: '100%' }} />
         </label>
         <label className="text-sm">Classe{' '}
           <select value={draft.cClass} aria-label="Classe"
             onChange={e => setDraft({ ...draft, cClass: e.target.value as CClass })}
-            className="rounded px-2 py-1" style={{ border: '1px solid var(--text-muted)', background: 'var(--surface)', width: '100%' }}>
+            className="field text-sm" style={{ width: '100%' }}>
             {(Object.keys(C_CLASS_LABELS) as CClass[]).map(c =>
               <option key={c} value={c}>{C_CLASS_LABELS[c]}</option>)}
           </select>
         </label>
         {formErr && <div className="text-sm" style={{ color: '#ef4444' }}>{formErr}</div>}
         <button onClick={() => { void submit(); }}
-          className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
-          style={{ background: 'var(--accent)' }}>
+          className="btn-accent press px-4 py-2 text-sm">
           {editingId ? 'Salva drone' : 'Aggiungi drone'}
         </button>
       </div>
@@ -117,8 +118,7 @@ export function ProfilePanel(
                 <input type="date" aria-label={`Scadenza ${label}`}
                   value={p.competencies[id]?.validUntil ?? ''}
                   onChange={e => setValidUntil(id, e.target.value)}
-                  className="rounded px-1"
-                  style={{ border: '1px solid var(--text-muted)', background: 'transparent' }} />
+                  className="field text-xs" />
               </label>
             )}
           </div>
@@ -126,7 +126,7 @@ export function ProfilePanel(
         <label className="text-sm">Numero operatore (facoltativo){' '}
           <input value={p.operatorId ?? ''} aria-label="Numero operatore"
             onChange={e => { void updatePilot({ ...p, operatorId: e.target.value || undefined }); }}
-            className="rounded px-2 py-1" style={{ border: '1px solid var(--text-muted)', background: 'transparent', width: '100%' }} />
+            className="field text-sm" style={{ width: '100%' }} />
         </label>
       </div>
     </div>

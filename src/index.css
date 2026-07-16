@@ -120,7 +120,8 @@ body { background: var(--bg); color: var(--text);
 /* Bottoni − / + del raggio: bersagli touch ≥32px, funzionano sempre */
 .radius-step { width: 32px; height: 32px; border-radius: 10px; flex: none;
   font-size: 18px; line-height: 1; font-weight: 600; color: var(--text);
-  background: rgba(138, 147, 160, 0.18); border: 0; cursor: pointer; }
+  background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+  border: 0; cursor: pointer; }
 
 /* Scheda verdetto: card a destra su desktop, bottom sheet su mobile */
 .verdict-sheet { position: absolute; right: 12px; top: calc(64px + var(--safe-top));
@@ -257,3 +258,29 @@ body { background: var(--bg); color: var(--text);
   .chev { transition: transform 0.2s var(--ease-out); }
 }
 .legend[open] .chev { transform: rotate(90deg); }
+
+/* Barra verifica e sheet: raggio di scala, comparsa animata */
+.verify-controls { border-radius: var(--radius-card); }
+@media (prefers-reduced-motion: no-preference) {
+  /* scende dall'alto mantenendo il centraggio orizzontale */
+  .verify-controls { animation: drop-center 0.22s var(--ease-out); }
+}
+@keyframes drop-center {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Maniglietta iOS del bottom sheet (solo mobile) */
+@media (max-width: 640px) {
+  .verdict-sheet::before { content: ''; display: block; width: 36px; height: 5px;
+    border-radius: 3px; margin: 2px auto 10px;
+    background: color-mix(in srgb, var(--text-muted) 45%, transparent); }
+}
+
+/* Toast aggiornamento PWA: centrato, scende dall'alto */
+.update-toast { position: absolute; top: calc(var(--safe-top) + 64px); left: 50%;
+  transform: translateX(-50%); z-index: 40; border-radius: var(--radius-card);
+  display: flex; gap: 12px; align-items: center; padding: 10px 16px; }
+@media (prefers-reduced-motion: no-preference) {
+  .update-toast { animation: drop-center 0.22s var(--ease-out); }
+}

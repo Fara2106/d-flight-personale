@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Verdict, Outcome } from '../rules/rulesEngine';
 import type { Drone } from '../profiles/profile.types';
 import { ZONE_COLORS } from '../map/mapStyle';
+import { CloseIcon } from '../ui/icons';
 
 const OUTCOME_UI: Record<Outcome, { icon: string; title: string; color: string }> = {
   ok: { icon: '✅', title: 'Volo consentito', color: '#22c55e' },
@@ -35,20 +36,20 @@ export function VerdictSheet(
   }
 
   return (
-    <div className="verdict-sheet rounded-2xl p-4" role="dialog" aria-label="Verdetto"
-      style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)' }}>
+    <div className="verdict-sheet glass-panel anim-rise p-4" role="dialog" aria-label="Verdetto"
+      style={{ borderRadius: 'var(--radius-sheet)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <strong>Posso volare qui?</strong>
-        <button onClick={onClose} aria-label="Chiudi verdetto"
-          style={{ color: 'var(--text-muted)', fontSize: 18 }}>✕</button>
+        <button onClick={onClose} aria-label="Chiudi verdetto" className="icon-btn">
+          <CloseIcon size={16} />
+        </button>
       </div>
 
       {drones.length > 0 && (
         <label className="text-sm" style={{ display: 'block', marginTop: 8 }}>Drone{' '}
           <select value={activeDroneId ?? ''} aria-label="Drone"
             onChange={e => onSelectDrone(e.target.value)}
-            className="rounded px-2 py-1"
-            style={{ border: '1px solid var(--text-muted)', background: 'var(--surface)' }}>
+            className="field text-sm">
             {drones.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </label>
@@ -58,8 +59,7 @@ export function VerdictSheet(
         <div style={{ marginTop: 10 }}>
           <p className="text-sm">⚠️ Configura un drone e le tue qualifiche per avere il verdetto.</p>
           <button onClick={onOpenProfile}
-            className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
-            style={{ background: 'var(--accent)', marginTop: 6 }}>Apri profilo</button>
+            className="btn-accent press px-4 py-2 text-sm" style={{ marginTop: 6 }}>Apri profilo</button>
         </div>
       ) : (
         <>
