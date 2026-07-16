@@ -4,7 +4,18 @@
 
 :root {
   --bg: #f5f6f8; --surface: #ffffff; --text: #1c2530; --text-muted: #8a93a0;
-  --accent: #007aff; --shadow: 0 10px 28px rgba(30,60,90,.18);
+  --accent: #007aff;
+  /* vetro stile iOS: pannelli semi-trasparenti sfocati sopra la mappa */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(20px) saturate(1.4);
+  /* due ombre: leggera per i controlli, profonda per pannelli e sheet */
+  --shadow-sm: 0 2px 10px rgba(30, 60, 90, 0.12);
+  --shadow-lg: 0 16px 40px rgba(30, 60, 90, 0.22);
+  --shadow: var(--shadow-lg); /* alias di transizione, rimosso a fine restyle */
+  /* scala raggi: pillola=999px, controlli, card, sheet */
+  --radius-ctrl: 14px; --radius-card: 18px; --radius-sheet: 22px;
+  --ease-out: cubic-bezier(0.25, 0.8, 0.35, 1);
   /* safe area iOS (viewport-fit=cover): 0 dove notch/barra home non esistono */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -13,7 +24,12 @@
 }
 [data-theme='dark'] {
   --bg: #0f141b; --surface: #1f2630; --text: #e8edf3; --text-muted: #8a93a0;
-  --accent: #0a84ff; --shadow: 0 12px 30px rgba(0,0,0,.5);
+  --accent: #0a84ff;
+  --glass-bg: rgba(26, 32, 42, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --shadow: var(--shadow-lg);
 }
 html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text);
@@ -115,3 +131,57 @@ body { background: var(--bg); color: var(--text);
 }
 :root .maplibregl-ctrl-bottom-right { bottom: var(--safe-bottom); right: var(--safe-right); }
 :root .maplibregl-ctrl-bottom-left { bottom: var(--safe-bottom); left: var(--safe-left); }
+
+/* ===== Restyle premium (vetro stile iOS) ===== */
+
+/* Superfici vetro: controlli piccoli (.glass) e pannelli/sheet (.glass-panel) */
+.glass, .glass-panel {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+}
+.glass { box-shadow: var(--shadow-sm); }
+.glass-panel { box-shadow: var(--shadow-lg); }
+/* browser senza backdrop-filter: superficie piena come prima del restyle */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .glass-panel, :root .maplibregl-popup-content { background: var(--surface); }
+}
+
+/* Azione primaria: blu accento pieno, ombra colorata tenue */
+.btn-accent {
+  background: var(--accent); color: #fff; font-weight: 600;
+  border: 0; border-radius: var(--radius-ctrl); cursor: pointer;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* Bottone-icona discreto (chiudi ✕ ecc.) */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer;
+  background: transparent; color: var(--text-muted); flex: none;
+}
+.icon-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* Campi input/select coerenti (pannelli profilo/verdetto) */
+.field {
+  border: 1px solid color-mix(in srgb, var(--text-muted) 45%, transparent);
+  border-radius: 10px; background: transparent; color: var(--text);
+  padding: 6px 10px; outline: none;
+}
+.field:focus { border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+
+/* Micro-transizioni (150-250ms). Spente con "riduci movimento". */
+@media (prefers-reduced-motion: no-preference) {
+  .press { transition: transform 0.15s var(--ease-out), filter 0.15s var(--ease-out); }
+  .press:hover { filter: brightness(1.06); }
+  .press:active { transform: scale(0.97); }
+  .anim-pop { animation: pop-in 0.18s var(--ease-out); }
+  .anim-rise { animation: rise-in 0.25s var(--ease-out); }
+}
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); } }
