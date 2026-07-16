@@ -1,6 +1,7 @@
 import { ZONE_COLORS } from '../map/mapStyle';
 import { legendAltitudeText, type CatAltitude } from '../data/categoryAltitudes';
 import type { RestrictionType } from '../data/ed269.types';
+import { ChevronIcon } from './icons';
 
 const ROWS: [RestrictionType, string][] = [
   ['none', 'Consentito (regole generali)'],
@@ -44,10 +45,10 @@ export function Legend({ altitudes, hiddenTypes, onToggleType }: {
       // su telefono la legenda aperta copre mezza mappa: parte chiusa lì,
       // aperta su desktop (valutato al mount; il toggle resta manuale)
       open={typeof window === 'undefined' || window.innerWidth > 640}
-      className="rounded-2xl p-3 text-sm"
-      style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)' }}
+      className="glass-panel legend text-sm"
     >
       <summary className="cursor-pointer font-semibold select-none">
+        <span className="chev" aria-hidden="true"><ChevronIcon size={13} /></span>
         Legenda<span className="hidden sm:inline"> (quota indicata sulla zona solo dove diversa)</span>
       </summary>
       <div className="mt-1">

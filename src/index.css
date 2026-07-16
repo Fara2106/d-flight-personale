@@ -236,3 +236,13 @@ body { background: var(--bg); color: var(--text);
 /* Overlay modale: scurisce E sfoca la mappa sotto */
 .overlay-dim { background: rgba(0, 0, 0, 0.35);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+
+/* Legenda: card vetro, chevron che ruota all'apertura */
+.legend { border-radius: var(--radius-card); padding: 12px 14px; }
+.legend summary { display: flex; align-items: center; gap: 6px; list-style: none; }
+.legend summary::-webkit-details-marker { display: none; }
+.chev { display: flex; color: var(--text-muted); flex: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .chev { transition: transform 0.2s var(--ease-out); }
+}
+.legend[open] .chev { transform: rotate(90deg); }
