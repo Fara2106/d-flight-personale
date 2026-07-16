@@ -128,7 +128,7 @@ for (const theme of ['dark', 'light']) {
   // tema via toggle UI (bottoni: sole=chiaro, luna=scuro)
   await page.getByRole('button', { name: theme === 'dark' ? /scuro/i : /chiaro/i }).click()
     .catch(async () => { // fallback: aria-label diverse → prova con l'emoji
-      await page.locator(`button:has-text("${theme === 'dark' ? '🌙' : '☀️'}")`).first().click();
+      await page.locator(`button[aria-label="${theme === 'dark' ? 'Scuro' : 'Chiaro'}"]`).click();
     });
   await page.evaluate(([z]) => {
     const m = window.__dflightMap;

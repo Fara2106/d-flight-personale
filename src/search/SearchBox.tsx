@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { geocode, type GeocodeResult } from './geocode';
+import { SearchIcon } from '../ui/icons';
 export function SearchBox({ onPick, disabled = false }:
   { onPick: (r: GeocodeResult) => void; disabled?: boolean }) {
   const [q, setQ] = useState(''); const [res, setRes] = useState<GeocodeResult[]>([]);
@@ -24,17 +25,16 @@ export function SearchBox({ onPick, disabled = false }:
   }
   return (
     <div className="relative">
-      <input value={q} onChange={e => run(e.target.value)} placeholder="⌕ Cerca un luogo…"
+      <span className="search-icon"><SearchIcon size={16} /></span>
+      <input value={q} onChange={e => run(e.target.value)} placeholder="Cerca un luogo…"
         disabled={disabled}
         title={disabled ? 'Ricerca non disponibile offline' : undefined}
-        className="w-full rounded-full px-4 py-2.5 text-sm outline-none disabled:opacity-50"
-        style={{ background:'var(--surface)', color:'var(--text)', boxShadow:'var(--shadow)' }} />
+        className="glass search-input disabled:opacity-50" />
       {res.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl"
-            style={{ background:'var(--surface)', boxShadow:'var(--shadow)' }}>
+        <ul className="glass-panel search-results anim-pop absolute z-10 mt-2 w-full overflow-hidden">
           {res.map((r,i) => (
-            <li key={i}><button onClick={() => { onPick(r); setRes([]); setQ(r.label); }}
-              className="block w-full px-4 py-2 text-left text-sm hover:opacity-80">{r.label}</button></li>
+            <li key={i}><button className="search-row"
+              onClick={() => { onPick(r); setRes([]); setQ(r.label); }}>{r.label}</button></li>
           ))}
         </ul>
       )}
