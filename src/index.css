@@ -221,3 +221,18 @@ body { background: var(--bg); color: var(--text);
 
 /* Bottone posizione */
 .locate-btn { border-radius: 999px; padding: 11px; display: flex; cursor: pointer; }
+
+/* Banner informativi: card vetro compatta con puntino colorato */
+.banner { display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 14px; border-radius: var(--radius-card); font-size: 14px; }
+.banner-dot { width: 8px; height: 8px; border-radius: 50%; flex: none;
+  margin-top: 6px; }
+
+/* Card errore: leggibile nei due temi (non testo rosso nudo sulla mappa) */
+.error-card { display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 14px; border-radius: var(--radius-card);
+  max-width: 480px; font-size: 14px; font-weight: 500; color: #ef4444; }
+
+/* Overlay modale: scurisce E sfoca la mappa sotto */
+.overlay-dim { background: rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }

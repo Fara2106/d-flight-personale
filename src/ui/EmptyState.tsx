@@ -11,9 +11,8 @@ export function EmptyState(
   }
 ) {
   return (
-    <div
-      className="mx-auto max-w-md rounded-2xl p-6 text-center"
-      style={{ background: 'var(--surface)', boxShadow: 'var(--shadow)' }}
+    <div className="glass-panel anim-pop mx-auto max-w-md p-6 text-center"
+      style={{ borderRadius: 'var(--radius-sheet)' }}
     >
       <h2 className="mb-2 text-lg font-bold">Importa le zone ufficiali</h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>

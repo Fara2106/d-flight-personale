@@ -111,8 +111,7 @@ export default function App() {
         <button onClick={() => setVerify({ point: null, radiusM: 100 })}
           disabled={zones.length === 0 || !!verify}
           title={zones.length === 0 ? 'Importa prima le zone' : 'Posso volare qui?'}
-          className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: 'var(--accent)' }}>
+          className="btn-accent press px-4 py-2 text-sm disabled:opacity-50">
           Verifica
         </button>
         {/* Profilo: niente bottone in chrome (feedback 2026-07-10) — resta
@@ -137,21 +136,27 @@ export default function App() {
       )}
 
       {profileOpen && (
-        <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center',
-          background:'rgba(0,0,0,.35)', padding:16, zIndex: 30 }}>
+        <div className="overlay-dim" style={{ position:'absolute', inset:0,
+          display:'grid', placeItems:'center', padding:16, zIndex: 30 }}>
           <ProfilePanel profiles={profiles} onClose={() => setProfileOpen(false)} />
         </div>
       )}
 
       {zones.length === 0 && (
-        <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center',
-          background:'rgba(0,0,0,.15)', padding:16 }}>
+        <div className="overlay-dim" style={{ position:'absolute', inset:0,
+          display:'grid', placeItems:'center', padding:16 }}>
           <EmptyState onImported={async () => { await refresh(); }} onError={setErr} />
         </div>
       )}
-      {(err ?? geo.error) && <div style={{ position:'absolute', top:'calc(var(--safe-top) + 64px)',
-        left:'calc(var(--safe-left) + 12px)', right:'calc(var(--safe-right) + 12px)',
-        color:'#ef4444' }}>{err ?? geo.error}</div>}
+      {(err ?? geo.error) && (
+        <div role="alert" className="glass-panel error-card anim-pop"
+          style={{ position:'absolute', top:'calc(var(--safe-top) + 64px)',
+            left:'calc(var(--safe-left) + 12px)', right:'calc(var(--safe-right) + 12px)',
+            width:'fit-content' }}>
+          <span className="banner-dot" style={{ background:'#ef4444' }} aria-hidden="true" />
+          <span>{err ?? geo.error}</span>
+        </div>
+      )}
     </div>
   );
 }
