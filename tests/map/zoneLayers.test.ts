@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  buildFillLayout, buildLinePaint, buildCatLinePaint,
+  buildFillLayout, buildCatLinePaint,
   buildCatFillPaint, typeVisibilityFilter,
   buildLabelLayout, severitySortKey, highlightFilter,
   labelDiffFilter, labelStandardFilter, hatchImage,
@@ -65,15 +65,14 @@ describe('leggibilità zone sovrapposte', () => {
   });
 
   it('bordi gerarchici: line-width maggiore per zone più restrittive, bordi "none" invisibili', () => {
-    const paint = buildLinePaint() as any;
+    // unico contorno rimasto: quello del mosaico per categoria (2026-07-17)
+    const paint = buildCatLinePaint() as any;
     const w = (t: string) => evalMatch(paint['line-width'], t);
     expect(w('prohibited')).toBeGreaterThan(w('auth_required'));
     expect(w('auth_required')).toBeGreaterThan(w('conditional'));
     // Le zone "none" sono invisibili (nessun bordo)
     expect(w('none')).toBe(0);
     expect(JSON.stringify(paint['line-color'])).toContain(ZONE_COLORS.prohibited);
-    // ora è una case-expression per fascia: il ramo "primaria" resta ben visibile
-    expect((paint['line-opacity'] as unknown[])[2]).toBeGreaterThanOrEqual(0.8);
   });
 
   it('etichette: symbol-sort-key dà priorità alla zona più restrittiva in collisione', () => {
@@ -107,15 +106,8 @@ describe('typeVisibilityFilter: nascondere categorie scelte dall\'utente (legend
 });
 
 describe('dedup fasce sulla mappa (bordi annidati + etichette duplicate)', () => {
-  it('line-opacity: bordo pieno solo su bandPrimary, accennato sulle altre fasce', () => {
-    const paint = buildLinePaint() as any;
-    const expr = paint['line-opacity'] as unknown[];
-    expect(expr[0]).toBe('case');
-    expect(JSON.stringify(expr)).toContain('bandPrimary');
-    const [, , full, faint] = expr as [string, unknown, number, number];
-    expect(full).toBeGreaterThan(faint);
-    expect(faint).toBeGreaterThan(0); // le fasce restano accennate, non invisibili
-  });
+  // il bordo per-fascia (line-opacity su bandPrimary) non esiste più: dal
+  // 2026-07-17 l'unico contorno è quello del mosaico — v. singleOutline.test.ts
 
   it('filtri etichette: eccezioni separate dalle quote standard, sempre sulla fascia primaria', () => {
     expect(labelDiffFilter()).toEqual(['all',

@@ -6,7 +6,7 @@ import {
   ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
   ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM,
 } from './mapStyle';
-import { zonesToGeoJSON, zonesToUnionGeoJSONAsync } from './zonesToGeoJSON';
+import { zonesToGeoJSON } from './zonesToGeoJSON';
 import { categoryMosaicFor } from './categoryOverlay';
 import { firstSymbolLayerId, placeLabelBoosts, darkWaterTweaks } from './basemapLabels';
 import { buildPopupContent } from './popupContent';
@@ -18,7 +18,6 @@ import type { GeoPosition } from '../location/useGeolocation';
 import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
-const SRC_RENDER = 'zones-render';
 const SRC_CAT = 'zones-cat';
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -97,16 +96,6 @@ export function severitySortKey(): maplibregl.ExpressionSpecification {
 
 export function buildFillLayout(): maplibregl.FillLayerSpecification['layout'] {
   return { 'fill-sort-key': severitySortKey() };
-}
-
-export function buildLinePaint(): maplibregl.LineLayerSpecification['paint'] {
-  return {
-    'line-color': zoneColorExpr(),
-    'line-width': matchByType(ZONE_LINE_WIDTH, 1.2),
-    // bordo pieno solo sulla fascia più estesa della zona (bandPrimary): le
-    // fasce interne del file D-Flight restano accennate, non un groviglio
-    'line-opacity': ['case', ['==', ['get', 'bandPrimary'], true], 0.9, 0.25],
-  };
 }
 
 // Gradazione dei veli d'insieme con lo zoom (feedback 2026-07-14: all'Italia
@@ -209,10 +198,10 @@ let unionGeneration = 0;
 
 function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string | null) {
   const data = zonesToGeoJSON(zones) as any;
-  // fill/bordo useranno geometrie FUSE (per zona alla scala di dettaglio, per
-  // CATEGORIA nella vista d'insieme — caso Fiumicino): le union costano sul
-  // file reale, quindi si parte con le fasce così come sono e si sostituiscono
-  // le sorgenti quando i risultati arrivano
+  // velo e bordo vengono dal mosaico per CATEGORIA (geometrie fuse e ritagliate:
+  // un colore e un contorno per punto). Il mosaico costa sul file reale, quindi
+  // si parte con le fasce così come sono e si sostituisce la sorgente quando il
+  // risultato arriva
   const gen = ++unionGeneration;
   const swapWhenReady = (sourceId: string, promise: Promise<unknown>) => {
     void promise.then((result) => {
@@ -226,14 +215,12 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
       }
     });
   };
-  swapWhenReady(SRC_RENDER, zonesToUnionGeoJSONAsync(zones));
-  // mosaico d'insieme: dalla cache IndexedDB se il dataset è già stato
-  // lavorato, altrimenti calcolato nel worker (sul file reale ~15-20s la
-  // prima volta; nel frattempo restano le fasce così come sono)
+  // mosaico: dalla cache IndexedDB se il dataset è già stato lavorato,
+  // altrimenti calcolato nel worker (sul file reale ~15-20s la prima volta;
+  // nel frattempo restano le fasce così come sono)
   swapWhenReady(SRC_CAT, categoryMosaicFor(zones));
   if (map.getSource(SRC)) {
     (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
-    (map.getSource(SRC_RENDER) as maplibregl.GeoJSONSource).setData(data);
     (map.getSource(SRC_CAT) as maplibregl.GeoJSONSource).setData(data);
     return;
   }
@@ -243,7 +230,6 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   // restano invece in cima (priorità nelle collisioni: sono info di sicurezza).
   const beforeId = firstSymbolLayerId(map.getStyle().layers ?? []);
   map.addSource(SRC, { type: 'geojson', data });
-  map.addSource(SRC_RENDER, { type: 'geojson', data });
   map.addSource(SRC_CAT, { type: 'geojson', data });
 
   // — VELO: sempre dal mosaico per categoria, a OGNI zoom — ogni punto un
@@ -252,15 +238,15 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   //   2026-07-15: "non capisco le aree accavallate che significhi")
   map.addLayer({ id: 'zones-cat-fill', type: 'fill', source: SRC_CAT,
     layout: buildFillLayout(), paint: buildCatFillPaint() }, beforeId);
+  // — CONTORNO: come il velo, sempre dal mosaico e a OGNI zoom — un solo
+  //   bordo per punto, che separa aree con regole DIVERSE. I bordi per singola
+  //   zona (zones-line, union per nome) si intrecciavano dove le zone si
+  //   sovrappongono davvero: a Roma/Fiumicino decine di contorni sopra un velo
+  //   piatto = ragnatela (feedback 2026-07-17: "le figure sono un po'
+  //   accavallate ancora"). Le zone dentro la stessa figura restano
+  //   distinguibili col tocco: il popup le elenca e l'highlight blu le isola.
   map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
-    maxzoom: ZONE_DETAIL_MINZOOM,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() }, beforeId);
-
-  // — DETTAGLIO (zoom ≥ soglia): i BORDI delle singole zone (per nome), per
-  //   capire i confini; il colore resta piatto dal mosaico
-  map.addLayer({ id: 'zones-line', type: 'line', source: SRC_RENDER,
-    minzoom: ZONE_DETAIL_MINZOOM,
-    layout: { 'line-sort-key': severitySortKey() }, paint: buildLinePaint() }, beforeId);
 
   // — tratteggio "richiede autorizzazione": indica la CATEGORIA (sorgente
   //   fusa: mai raddoppiato, niente moiré) ma SOLO alla scala di dettaglio —
@@ -326,7 +312,6 @@ function applyTypeVisibility(map: maplibregl.Map, hidden: RestrictionType[]) {
     if (map.getLayer(id)) map.setFilter(id, typeVisibilityFilter(hidden, base));
   };
   set('zones-cat-fill'); set('zones-cat-line');
-  set('zones-line');
   set('zones-hatch', HATCH_FILTER);
   set('zones-label', labelDiffFilter());
   set('zones-label-standard', labelStandardFilter());
