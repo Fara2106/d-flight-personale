@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import booleanIntersects from '@turf/boolean-intersects';
-import type { Polygon } from 'geojson';
-import { snapGeometry, unionAll, categoryMosaic } from '../../src/map/fastUnion';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import type { MultiPolygon, Polygon } from 'geojson';
+import { snapGeometry, unionAll, categoryMosaic, categoryOutlines, categoryOverlay } from '../../src/map/fastUnion';
 import type { Zone } from '../../src/data/ed269.types';
 
 const rectGeom = (x0: number, x1: number, y0 = 0, y1 = 1): Polygon => ({
@@ -102,5 +103,40 @@ describe('categoryMosaic: mosaico piatto per categoria (sincrono, per il worker)
   it('le feature portano catUnion=true (stesse properties della vista d\'insieme)', () => {
     const fc = categoryMosaic([zone('a', rectGeom(0, 1), 'auth_required')]);
     expect(fc.features[0].properties?.catUnion).toBe(true);
+  });
+});
+
+describe('categoryOutlines: contorni cumulativi per severità (round 9)', () => {
+  it('una feature per soglia; niente contorno per "none"', () => {
+    const fc = categoryOutlines([
+      zone('p', rectGeom(0, 1), 'prohibited'),
+      zone('a', rectGeom(0, 3), 'auth_required'),
+      zone('n', rectGeom(0, 5), 'none'),
+    ]);
+    const types = fc.features.map((f) => f.properties?.restrictionType).sort();
+    expect(types).toEqual(['auth_required', 'prohibited']);
+    expect(fc.features.every((f) => f.properties?.catOutline === true)).toBe(true);
+  });
+
+  it('il blob cumulativo di una soglia CONTIENE le categorie più severe', () => {
+    // auth cumulativo = union(prohibited ∪ auth): copre il punto interno al prohibited
+    const fc = categoryOutlines([
+      zone('p', rectGeom(0, 1), 'prohibited'),
+      zone('a', rectGeom(2, 3), 'auth_required'), // disgiunto dal prohibited
+    ]);
+    const auth = fc.features.find((f) => f.properties?.restrictionType === 'auth_required')!;
+    const g = auth.geometry as Polygon | MultiPolygon;
+    // il contorno auth abbraccia sia il prohibited (x≈0.5) sia l'auth (x≈2.5)
+    expect(booleanPointInPolygon([0.5, 0.5], g)).toBe(true);
+    expect(booleanPointInPolygon([2.5, 0.5], g)).toBe(true);
+  });
+
+  it('categoryOverlay: ritorna sia i veli (fill) sia i contorni (outline)', () => {
+    const ov = categoryOverlay([
+      zone('p', rectGeom(0, 1), 'prohibited'),
+      zone('a', rectGeom(0, 3), 'auth_required'),
+    ]);
+    expect(ov.fill.features.every((f) => f.properties?.catUnion === true)).toBe(true);
+    expect(ov.outline.features.every((f) => f.properties?.catOutline === true)).toBe(true);
   });
 });

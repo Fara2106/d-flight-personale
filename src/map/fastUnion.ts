@@ -183,3 +183,51 @@ export function categoryMosaic(zones: Zone[]): FeatureCollection {
   }
   return { type: 'FeatureCollection', features };
 }
+
+/** Insieme (interface) delle due collezioni della vista d'insieme: i veli
+ *  ritagliati (un colore per punto) e i contorni cumulativi (un bordo per
+ *  punto). Trasportata da worker → cache → MapView. */
+export interface CategoryOverlay { fill: FeatureCollection; outline: FeatureCollection }
+
+/**
+ * Contorni della vista d'insieme come BLOB CUMULATIVI per severità: per ogni
+ * soglia si disegna il perimetro dell'unione di quella categoria e di tutte le
+ * più severe. Così ogni confine INTERNO tra due categorie finisce dentro un
+ * blob e non viene disegnato — resta solo il perimetro esterno, colorato per
+ * severità. Solo union (robuste), mai difference: erano le imprecisioni del
+ * ritaglio a far sbucare i bordi uno di fianco all'altro (feedback Lorenzo
+ * 2026-07-22: "le forme fanno pasticcio"). `none` non ha contorno.
+ */
+export function categoryOutlines(zones: Zone[]): FeatureCollection {
+  const byType = new Map<RestrictionType, Poly[]>();
+  const seen = new Set<string>();
+  for (const z of zones) {
+    const g = z.geometry;
+    if (g.type !== 'Polygon' && g.type !== 'MultiPolygon') continue;
+    if (z.restrictionType === 'none') continue; // il verde non ha contorno
+    const k = z.restrictionType + JSON.stringify(g.coordinates);
+    if (seen.has(k)) continue; // dedup doppioni D-Flight
+    seen.add(k);
+    const arr = byType.get(z.restrictionType);
+    if (arr) arr.push(g); else byType.set(z.restrictionType, [g]);
+  }
+  // dalla più severa alla meno severa: il blob cumulativo cresce a ogni soglia
+  const ordered = [...byType.entries()].sort(([a], [b]) =>
+    RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
+  const features: Feature[] = [];
+  let prev: Poly[] = []; // geometrie già fuse delle categorie più severe
+  for (const [type, geoms] of ordered) {
+    const { merged } = unionAll([...prev, ...geoms]);
+    for (const m of merged) {
+      features.push({ type: 'Feature', geometry: m.geometry,
+        properties: { restrictionType: type, catOutline: true } });
+    }
+    prev = merged.map((m) => m.geometry as Poly); // riusa il lavoro alla soglia dopo
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+/** Le due collezioni della vista d'insieme in un colpo solo (veli + contorni). */
+export function categoryOverlay(zones: Zone[]): CategoryOverlay {
+  return { fill: categoryMosaic(zones), outline: categoryOutlines(zones) };
+}
