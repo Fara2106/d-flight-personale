@@ -20,6 +20,23 @@ function approxArea(g: Geometry): number {
   return 0;
 }
 
+/** Soglia di dedup etichette per prossimità (~3 km): a parità di testo quota,
+ *  etichette più vicine di così vengono ridotte a una (feedback 2026-07-22). */
+const LABEL_DEDUP_DEG = 0.03;
+
+/** Centro del bounding box (anelli esterni): basta per confronti di vicinanza. */
+function bboxCenter(g: Geometry): [number, number] {
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  const scan = (r: Position[]) => { for (const [x, y] of r) {
+    if (x < minx) minx = x; if (x > maxx) maxx = x;
+    if (y < miny) miny = y; if (y > maxy) maxy = y;
+  } };
+  if (g.type === 'Polygon') scan(g.coordinates[0] ?? []);
+  else if (g.type === 'MultiPolygon') for (const p of g.coordinates) scan(p[0] ?? []);
+  else return [0, 0];
+  return [(minx + maxx) / 2, (miny + maxy) / 2];
+}
+
 /**
  * Il file D-Flight spezza una zona in più record ("fasce" con lo stesso nome,
  * id diversi): disegnarli tutti al completo produce etichette duplicate
@@ -49,6 +66,25 @@ export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
     return best;
   };
   const primaryByNameLabel = largestBy((i) => `${zones[i].name} ${labels[i]}`);
+  const isNameLabelPrimary = (i: number) =>
+    primaryByNameLabel.get(`${zones[i].name} ${labels[i]}`) === i;
+  // tra le primarie (nome+quota), sopprimi i doppioni di STESSO testo troppo
+  // vicini: tiene la più estesa. Testi diversi (= quote diverse) mai toccati.
+  const centers = zones.map((z) => bboxCenter(z.geometry));
+  const keptByLabel = new Map<string, number[]>();
+  const suppressed = new Set<number>();
+  const candidates = zones.map((_, i) => i)
+    .filter(isNameLabelPrimary)
+    .sort((a, b) => areas[b] - areas[a]); // la più estesa vince
+  for (const i of candidates) {
+    const kept = keptByLabel.get(labels[i]) ?? [];
+    const near = kept.some((j) => {
+      const dx = centers[i][0] - centers[j][0], dy = centers[i][1] - centers[j][1];
+      return dx * dx + dy * dy < LABEL_DEDUP_DEG * LABEL_DEDUP_DEG;
+    });
+    if (near) suppressed.add(i);
+    else { kept.push(i); keptByLabel.set(labels[i], kept); }
+  }
 
   return {
     type: 'FeatureCollection',
@@ -65,7 +101,7 @@ export function zonesToGeoJSON(zones: Zone[]): FeatureCollection {
         message: z.message,
         reasons: z.reasons,
         applicabilityText: z.applicabilityText ?? null,
-        labelPrimary: primaryByNameLabel.get(`${z.name} ${labels[i]}`) === i,
+        labelPrimary: isNameLabelPrimary(i) && !suppressed.has(i),
         labelDiffers: differs(z),
       },
     })),

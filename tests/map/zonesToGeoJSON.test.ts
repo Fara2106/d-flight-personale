@@ -99,6 +99,26 @@ describe('labelDiffers: etichetta-quota solo dove serve (caso Fiumicino, 2026-07
   });
 });
 
+describe('dedup etichette per valore+prossimità (round 9, "0 m" ripetuti)', () => {
+  const near = (id: string, name: string, cx: number): Zone => ({
+    ...z, id, name, restrictionType: 'prohibited', upperLimitM: 0, verticalRef: 'AGL',
+    geometry: { type: 'Polygon',
+      coordinates: [[[cx, 41.9], [cx + 0.004, 41.9], [cx + 0.004, 41.904], [cx, 41.9]]] },
+  });
+
+  it('stesso testo, nomi diversi, VICINE → una sola primaria', () => {
+    const fc = zonesToGeoJSON([near('a', 'Roma A', 12.50), near('b', 'Roma B', 12.505)]);
+    const primaries = fc.features.filter((f) => f.properties?.labelPrimary);
+    expect(primaries).toHaveLength(1);
+  });
+
+  it('stesso testo ma LONTANE → entrambe primarie', () => {
+    const fc = zonesToGeoJSON([near('a', 'Roma A', 12.50), near('b', 'Milano B', 9.19)]);
+    const primaries = fc.features.filter((f) => f.properties?.labelPrimary);
+    expect(primaries).toHaveLength(2);
+  });
+});
+
 describe('zonesToCategoryUnionAsync: vista d\'insieme per categoria (zoom bassi)', () => {
   const rect = (id: string, name: string, x0: number, x1: number,
     over: Partial<Zone> = {}): Zone => ({
