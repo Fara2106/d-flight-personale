@@ -117,19 +117,18 @@ try {
   check('offline: verdetto calcolato (🟡 con condizioni)', true);
   await page.getByRole('button', { name: /esci dalla verifica/i }).click();
 
-  // 7. torna online: build B → toast → Aggiorna → reload sulla build nuova
+  // 7. torna online: build B → aggiornamento AUTOMATICO (skipWaiting + reload),
+  //    senza tap: appena rileva il SW nuovo, UpdateToast lo applica da solo
+  //    (fix iPhone 2026-07-22: il toast-con-bottone spesso non veniva toccato).
   await context.setOffline(false);
   build({ VITE_BUILD_ID: 'e2e-update' });
   await page.evaluate(async () => {
     await (await navigator.serviceWorker.getRegistration())?.update();
   });
-  await page.getByText(/nuova versione disponibile/i).waitFor({ timeout: 20000 });
-  check('aggiornamento: toast visibile (niente reload automatico)', true);
-  await page.getByRole('button', { name: /^aggiorna$/i }).click();
   await page.waitForFunction(() =>
     document.querySelector('#root > div')?.getAttribute('data-build') === 'e2e-update',
-    { timeout: 20000 });
-  check('aggiornamento: reload con la build nuova', true);
+    { timeout: 30000 });
+  check('aggiornamento: reload automatico sulla build nuova (senza tap)', true);
 } finally {
   await browser?.close();
   server.kill();
