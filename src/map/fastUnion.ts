@@ -140,20 +140,64 @@ export function unionAll(geoms: Poly[]): { merged: PolyFeature[]; failures: numb
   return { merged: level, failures };
 }
 
-/** Union per categoria: raccoglie le geometrie per restrictionType (dedup dei
- *  doppioni D-Flight), ordina dalla più severa e FONDE ogni gruppo. È la parte
- *  COSTOSA del calcolo (union di migliaia di fasce), fatta UNA sola volta: sia
- *  i veli sia i contorni si derivano da qui. Prima veli e contorni univano le
- *  grezze separatamente → calcolo doppio, "lentino" all'import sul file reale
- *  (feedback Lorenzo 2026-07-22, confermato a bench: outlines ≈ 1.0× mosaic). */
+// — Semplificazione (Douglas-Peucker) delle geometrie per la vista d'insieme —
+// Le zone ED-269 hanno moltissimi vertici ravvicinati (archi discretizzati,
+// confini densi). Sfoltirli con una tolleranza SOTTO-metrica prima dell'union
+// accelera il calcolo (file reale ~4500 zone: 18s→11s) senza spostare i bordi
+// in modo percepibile: sul file reale l'area cambia < 0.002% e il numero di
+// figure resta identico (niente sliver). Riguarda SOLO veli e contorni
+// d'insieme; popup e hit-test usano le geometrie precise (zonesToGeoJSON).
+const SIMPLIFY_TOL = 1e-4; // ~10 m: sotto il pixel fino a ~z15
+
+function perpDist(p: Position, a: Position, b: Position): number {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+  let t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+function douglasPeucker(pts: Position[], tol: number): Position[] {
+  if (pts.length < 3) return pts;
+  let maxD = 0, idx = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const d = perpDist(pts[i], pts[0], pts[pts.length - 1]);
+    if (d > maxD) { maxD = d; idx = i; }
+  }
+  if (maxD <= tol) return [pts[0], pts[pts.length - 1]];
+  const l = douglasPeucker(pts.slice(0, idx + 1), tol);
+  const r = douglasPeucker(pts.slice(idx), tol);
+  return l.slice(0, -1).concat(r);
+}
+
+const simplifyRing = (r: Position[], tol: number): Position[] => {
+  const s = douglasPeucker(r, tol);
+  return s.length >= 4 ? s : r; // mai degenerare un anello valido
+};
+
+function simplifyPoly(g: Poly, tol: number): Poly {
+  if (g.type === 'Polygon') {
+    return { type: 'Polygon', coordinates: g.coordinates.map((r) => simplifyRing(r, tol)) };
+  }
+  return { type: 'MultiPolygon', coordinates: g.coordinates.map((p) => p.map((r) => simplifyRing(r, tol))) };
+}
+
+/** Union per categoria: raccoglie le geometrie per restrictionType (semplificate
+ *  + dedup dei doppioni D-Flight), ordina dalla più severa e FONDE ogni gruppo.
+ *  È la parte COSTOSA del calcolo (union di migliaia di fasce), fatta UNA sola
+ *  volta: sia i veli sia i contorni si derivano da qui. Prima veli e contorni
+ *  univano le grezze separatamente → calcolo doppio, "lentino" all'import sul
+ *  file reale (feedback Lorenzo 2026-07-22, confermato a bench). */
 type CategoryUnion = { type: RestrictionType; merged: PolyFeature[] };
 
 function orderedCategoryUnions(zones: Zone[]): CategoryUnion[] {
   const byType = new Map<RestrictionType, Poly[]>();
   const seen = new Set<string>();
   for (const z of zones) {
-    const g = z.geometry;
-    if (g.type !== 'Polygon' && g.type !== 'MultiPolygon') continue;
+    const g0 = z.geometry;
+    if (g0.type !== 'Polygon' && g0.type !== 'MultiPolygon') continue;
+    const g = simplifyPoly(g0, SIMPLIFY_TOL);
     const k = z.restrictionType + JSON.stringify(g.coordinates); // dedup doppioni
     if (seen.has(k)) continue;
     seen.add(k);
