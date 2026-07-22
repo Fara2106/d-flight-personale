@@ -4,7 +4,9 @@
 // ALTRI test (es. App.test) che montano l'albero senza occuparsi della PWA.
 import { useState } from 'react';
 
-export function useRegisterSW() {
+export function useRegisterSW(_opts?: {
+  onRegisteredSW?: (url: string, r?: ServiceWorkerRegistration) => void;
+}) {
   const needRefresh = useState(false);
   const offlineReady = useState(false);
   return { needRefresh, offlineReady, updateServiceWorker: async (_reload?: boolean) => {} };

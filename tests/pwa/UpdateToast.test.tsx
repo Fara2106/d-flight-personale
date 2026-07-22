@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UpdateToast } from '../../src/pwa/UpdateToast';
 
 // vi.mock è hoisted sopra gli import: le variabili esterne usate nella factory
@@ -15,17 +15,21 @@ vi.mock('virtual:pwa-register/react', () => ({
 }));
 
 describe('UpdateToast', () => {
-  it('non mostra nulla se non c è un aggiornamento', () => {
+  it('senza aggiornamento non mostra nulla e non forza update', () => {
     mockNeedRefresh = false;
+    mockUpdateServiceWorker.mockClear();
     render(<UpdateToast />);
     expect(screen.queryByRole('status')).toBeNull();
+    expect(mockUpdateServiceWorker).not.toHaveBeenCalled();
   });
 
-  it('con aggiornamento pronto mostra il toast e Aggiorna applica', () => {
+  it('con aggiornamento pronto lo APPLICA da solo (skipWaiting+reload) e mostra il toast', () => {
+    // su iPhone il toast "prompt" spesso non veniva mai toccato → utente su
+    // versione vecchia. Ora l'update si applica automaticamente.
     mockNeedRefresh = true;
+    mockUpdateServiceWorker.mockClear();
     render(<UpdateToast />);
-    expect(screen.getByRole('status')).toHaveTextContent(/nuova versione disponibile/i);
-    fireEvent.click(screen.getByRole('button', { name: /aggiorna/i }));
+    expect(screen.getByRole('status')).toHaveTextContent(/aggiorno/i);
     expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true);
   });
 });
