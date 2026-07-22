@@ -40,3 +40,15 @@ describe('un solo contorno per punto (feedback "aree accavallate" 2026-07-17)', 
     expect(src).toMatch(/buildCatLinePaint/);
   });
 });
+
+describe('contorni cumulativi (round 9): bordo da sorgente dedicata', () => {
+  it("zones-cat-line legge la sorgente 'zones-cat-outline', non il mosaico dei veli", () => {
+    const block = layerBlock('zones-cat-line');
+    expect(block).not.toBeNull();
+    expect(block).toMatch(/source:\s*SRC_CAT_LINE/);
+  });
+  it("l'hatch usa la costante di opacità (calmato), non 0.3 fisso", () => {
+    const block = layerBlock('zones-hatch');
+    expect(block).toMatch(/HATCH_FILL_OPACITY/);
+  });
+});

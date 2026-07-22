@@ -4,10 +4,10 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   mapStyleUrl, ITALY_CENTER, ITALY_ZOOM,
   ZONE_COLORS, RESTRICTION_ORDER, ZONE_FILL_OPACITY, ZONE_LINE_WIDTH,
-  ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM,
+  ZONE_DETAIL_MINZOOM, ZONE_LABEL_ALL_MINZOOM, HATCH_FILL_OPACITY,
 } from './mapStyle';
 import { zonesToGeoJSON } from './zonesToGeoJSON';
-import { categoryMosaicFor } from './categoryOverlay';
+import { categoryOverlayFor } from './categoryOverlay';
 import { firstSymbolLayerId, placeLabelBoosts, darkWaterTweaks } from './basemapLabels';
 import { buildPopupContent } from './popupContent';
 import { wireMapIdleFlag } from './mapIdleFlag';
@@ -19,6 +19,7 @@ import type { Zone, RestrictionType } from '../data/ed269.types';
 
 const SRC = 'zones';
 const SRC_CAT = 'zones-cat';
+const SRC_CAT_LINE = 'zones-cat-outline'; // contorni cumulativi (un bordo per punto)
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
@@ -218,10 +219,14 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   // mosaico: dalla cache IndexedDB se il dataset è già stato lavorato,
   // altrimenti calcolato nel worker (sul file reale ~15-20s la prima volta;
   // nel frattempo restano le fasce così come sono)
-  swapWhenReady(SRC_CAT, categoryMosaicFor(zones));
+  // un solo calcolo (cache/worker), due sorgenti: veli ritagliati + contorni cumulativi
+  const overlay = categoryOverlayFor(zones);
+  swapWhenReady(SRC_CAT, overlay.then((o) => o.fill));
+  swapWhenReady(SRC_CAT_LINE, overlay.then((o) => o.outline));
   if (map.getSource(SRC)) {
     (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(data);
     (map.getSource(SRC_CAT) as maplibregl.GeoJSONSource).setData(data);
+    (map.getSource(SRC_CAT_LINE) as maplibregl.GeoJSONSource).setData(data);
     return;
   }
   ensureHatchImage(map);
@@ -231,6 +236,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   const beforeId = firstSymbolLayerId(map.getStyle().layers ?? []);
   map.addSource(SRC, { type: 'geojson', data });
   map.addSource(SRC_CAT, { type: 'geojson', data });
+  map.addSource(SRC_CAT_LINE, { type: 'geojson', data });
 
   // — VELO: sempre dal mosaico per categoria, a OGNI zoom — ogni punto un
   //   solo colore (la regola più severa). I veli per-zona si sommavano nelle
@@ -245,7 +251,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   //   piatto = ragnatela (feedback 2026-07-17: "le figure sono un po'
   //   accavallate ancora"). Le zone dentro la stessa figura restano
   //   distinguibili col tocco: il popup le elenca e l'highlight blu le isola.
-  map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT,
+  map.addLayer({ id: 'zones-cat-line', type: 'line', source: SRC_CAT_LINE,
     layout: { 'line-sort-key': severitySortKey() }, paint: buildCatLinePaint() }, beforeId);
 
   // — tratteggio "richiede autorizzazione": indica la CATEGORIA (sorgente
@@ -254,7 +260,7 @@ function addZoneLayers(map: maplibregl.Map, zones: Zone[], highlightId: string |
   //   lì resta il velo piatto leggerissimo (feedback 2026-07-11)
   map.addLayer({ id: 'zones-hatch', type: 'fill', source: SRC_CAT,
     minzoom: ZONE_DETAIL_MINZOOM, filter: HATCH_FILTER,
-    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': 0.3 } }, beforeId);
+    paint: { 'fill-pattern': 'zone-hatch', 'fill-opacity': HATCH_FILL_OPACITY } }, beforeId);
 
   // layer di hit trasparente sulle FASCE: il popup ha bisogno delle proprietà
   // per-fascia (quote, message, reasons) che le sorgenti fuse non hanno

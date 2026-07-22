@@ -41,3 +41,8 @@ export const ZONE_LABEL_ALL_MINZOOM = 13;
 
 export const ITALY_CENTER: [number, number] = [12.5, 42.0];
 export const ITALY_ZOOM = 5;
+
+/** Opacità del tratteggio "richiede autorizzazione": tenuta bassa perché la
+ *  CTR di Roma/Fiumicino copre mezzo schermo — il segnale resta (velo + bordo
+ *  arancione), il rumore no (feedback Lorenzo 2026-07-22). */
+export const HATCH_FILL_OPACITY = 0.15;
