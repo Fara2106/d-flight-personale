@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Polygon } from 'geojson';
-import { computeCategoryMosaic } from '../../src/map/overlayWorkerClient';
+import { computeCategoryOverlay } from '../../src/map/overlayWorkerClient';
 import type { Zone } from '../../src/data/ed269.types';
 
 const rect = (x0: number, x1: number): Polygon => ({
@@ -18,16 +18,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('computeCategoryMosaic: worker se disponibile, altrimenti inline', () => {
-  it('senza Worker (jsdom): calcola inline e restituisce il mosaico', async () => {
+describe('computeCategoryOverlay: worker se disponibile, altrimenti inline', () => {
+  it('senza Worker (jsdom): calcola inline e restituisce fill+outline', async () => {
     // in jsdom Worker non esiste: il fallback inline deve funzionare
-    const fc = await computeCategoryMosaic([zone('a', 'auth_required')]);
-    expect(fc.features).toHaveLength(1);
-    expect(fc.features[0].properties?.catUnion).toBe(true);
+    const ov = await computeCategoryOverlay([zone('a', 'auth_required')]);
+    expect(ov.fill.features).toHaveLength(1);
+    expect(ov.fill.features[0].properties?.catUnion).toBe(true);
+    expect(ov.outline.features[0].properties?.catOutline).toBe(true);
   });
 
-  it('con Worker: usa il worker e restituisce il suo risultato', async () => {
-    const FAKE = { type: 'FeatureCollection', features: [] };
+  it('con Worker: inoltra le zone e restituisce ciò che il worker manda', async () => {
+    const FAKE = { fill: { type: 'FeatureCollection', features: [] },
+                   outline: { type: 'FeatureCollection', features: [] } };
     const posted: unknown[] = [];
     class FakeWorker {
       onmessage: ((e: { data: unknown }) => void) | null = null;
@@ -41,12 +43,12 @@ describe('computeCategoryMosaic: worker se disponibile, altrimenti inline', () =
     }
     vi.stubGlobal('Worker', FakeWorker);
     const zones = [zone('a', 'auth_required')];
-    const fc = await computeCategoryMosaic(zones);
-    expect(fc).toEqual(FAKE);
+    const ov = await computeCategoryOverlay(zones);
+    expect(ov).toEqual(FAKE);
     expect(posted).toEqual([zones]);
   });
 
-  it('worker che va in errore → fallback inline (mai lasciare la mappa senza mosaico)', async () => {
+  it('worker che va in errore → fallback inline (mai lasciare la mappa senza overlay)', async () => {
     class BrokenWorker {
       onmessage: ((e: { data: unknown }) => void) | null = null;
       onerror: ((e: unknown) => void) | null = null;
@@ -56,8 +58,8 @@ describe('computeCategoryMosaic: worker se disponibile, altrimenti inline', () =
       terminate() { /* niente */ }
     }
     vi.stubGlobal('Worker', BrokenWorker);
-    const fc = await computeCategoryMosaic([zone('a', 'auth_required')]);
-    expect(fc.features).toHaveLength(1);
-    expect(fc.features[0].properties?.catUnion).toBe(true);
+    const ov = await computeCategoryOverlay([zone('a', 'auth_required')]);
+    expect(ov.fill.features).toHaveLength(1);
+    expect(ov.fill.features[0].properties?.catUnion).toBe(true);
   });
 });

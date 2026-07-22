@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import type { FeatureCollection, Polygon } from 'geojson';
-import { categoryMosaicFor } from '../../src/map/categoryOverlay';
-import { zonesKey, saveCachedMosaic, loadCachedMosaic } from '../../src/map/overlayCache';
+import { categoryOverlayFor } from '../../src/map/categoryOverlay';
+import { zonesKey, saveCachedOverlay, loadCachedOverlay } from '../../src/map/overlayCache';
 import type { Zone } from '../../src/data/ed269.types';
 
 declare const IDBFactory: any;
@@ -21,27 +21,27 @@ const zone = (id: string): Zone => ({
   geometry: rect(0, 2),
 });
 
-describe('categoryMosaicFor: cache → worker/inline → save', () => {
-  it('cache hit: restituisce il mosaico salvato SENZA ricalcolare', async () => {
+describe('categoryOverlayFor: cache → worker/inline → save', () => {
+  it('cache hit: restituisce l\'overlay salvato SENZA ricalcolare', async () => {
     const zones = [zone('a')];
-    const cached: FeatureCollection = {
+    const cachedFc: FeatureCollection = {
       type: 'FeatureCollection',
       features: [{ type: 'Feature', geometry: rect(9, 10),
         properties: { restrictionType: 'prohibited', catUnion: true, marker: 'dalla-cache' } }],
     };
-    await saveCachedMosaic(zonesKey(zones), cached);
+    const cached = { fill: cachedFc, outline: cachedFc };
+    await saveCachedOverlay(zonesKey(zones), cached);
     // se provasse a calcolare col worker, questo stub esploderebbe
     class BombWorker { constructor() { throw new Error('non doveva calcolare'); } }
     vi.stubGlobal('Worker', BombWorker);
-    const fc = await categoryMosaicFor(zones);
-    expect(fc).toEqual(cached);
+    const ov = await categoryOverlayFor(zones);
+    expect(ov).toEqual(cached);
   });
 
   it('cache miss: calcola (inline in jsdom) e salva il risultato in cache', async () => {
     const zones = [zone('a')];
-    const fc = await categoryMosaicFor(zones);
-    expect(fc.features).toHaveLength(1);
-    expect(fc.features[0].properties?.catUnion).toBe(true);
-    expect(await loadCachedMosaic(zonesKey(zones))).toEqual(fc);
+    const ov = await categoryOverlayFor(zones);
+    expect(ov.fill.features[0].properties?.catUnion).toBe(true);
+    expect(await loadCachedOverlay(zonesKey(zones))).toEqual(ov);
   });
 });

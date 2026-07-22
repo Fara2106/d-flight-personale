@@ -1,17 +1,17 @@
-// Calcola il mosaico per categoria in un Web Worker quando possibile
+// Calcola l'overlay per categoria in un Web Worker quando possibile
 // (il calcolo sul file reale costa ~15-20s: nel main thread congelerebbe
 // tutto), con fallback inline per ambienti senza Worker (test jsdom,
 // browser antichi) o se il worker va in errore.
-import type { FeatureCollection } from 'geojson';
 import type { Zone } from '../data/ed269.types';
-import { categoryMosaic } from './fastUnion';
+import type { CategoryOverlay } from './fastUnion';
+import { categoryOverlay } from './fastUnion';
 
-async function inline(zones: Zone[]): Promise<FeatureCollection> {
+async function inline(zones: Zone[]): Promise<CategoryOverlay> {
   await new Promise((r) => setTimeout(r, 0)); // lascia respirare la UI
-  return categoryMosaic(zones);
+  return categoryOverlay(zones);
 }
 
-export function computeCategoryMosaic(zones: Zone[]): Promise<FeatureCollection> {
+export function computeCategoryOverlay(zones: Zone[]): Promise<CategoryOverlay> {
   if (typeof Worker === 'undefined') return inline(zones);
   return new Promise((resolve) => {
     let worker: Worker;
@@ -21,7 +21,7 @@ export function computeCategoryMosaic(zones: Zone[]): Promise<FeatureCollection>
       resolve(inline(zones));
       return;
     }
-    worker.onmessage = (e: MessageEvent<FeatureCollection>) => {
+    worker.onmessage = (e: MessageEvent<CategoryOverlay>) => {
       worker.terminate();
       resolve(e.data);
     };

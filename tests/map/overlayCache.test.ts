@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import type { FeatureCollection, Polygon } from 'geojson';
-import { zonesKey, loadCachedMosaic, saveCachedMosaic } from '../../src/map/overlayCache';
+import { zonesKey, loadCachedOverlay, saveCachedOverlay } from '../../src/map/overlayCache';
 import type { Zone } from '../../src/data/ed269.types';
 
 declare const IDBFactory: any;
@@ -23,6 +23,7 @@ const FC: FeatureCollection = {
   features: [{ type: 'Feature', geometry: rect(0, 2),
     properties: { restrictionType: 'auth_required', catUnion: true } }],
 };
+const OV = { fill: FC, outline: FC };
 
 describe('zonesKey: identifica il dataset importato', () => {
   it('stessa lista di zone → stessa chiave, anche in ordine diverso', () => {
@@ -37,26 +38,34 @@ describe('zonesKey: identifica il dataset importato', () => {
   });
 });
 
-describe('cache del mosaico in IndexedDB', () => {
+describe('cache dell\'overlay in IndexedDB', () => {
   it('miss: senza nulla in cache risponde null', async () => {
-    expect(await loadCachedMosaic('k1')).toBeNull();
+    expect(await loadCachedOverlay('k1')).toBeNull();
   });
 
-  it('hit: dopo il save restituisce il mosaico salvato', async () => {
-    await saveCachedMosaic('k1', FC);
-    expect(await loadCachedMosaic('k1')).toEqual(FC);
+  it('hit: dopo il save restituisce l\'overlay salvato', async () => {
+    await saveCachedOverlay('k1', OV);
+    expect(await loadCachedOverlay('k1')).toEqual(OV);
   });
 
-  it('chiave diversa (nuovo import) → miss: mai servire il mosaico di un altro dataset', async () => {
-    await saveCachedMosaic('k1', FC);
-    expect(await loadCachedMosaic('k2')).toBeNull();
+  it('chiave diversa (nuovo import) → miss: mai servire l\'overlay di un altro dataset', async () => {
+    await saveCachedOverlay('k1', OV);
+    expect(await loadCachedOverlay('k2')).toBeNull();
   });
 
   it('un nuovo save sostituisce il precedente (un solo dataset alla volta)', async () => {
-    await saveCachedMosaic('k1', FC);
-    const FC2: FeatureCollection = { type: 'FeatureCollection', features: [] };
-    await saveCachedMosaic('k2', FC2);
-    expect(await loadCachedMosaic('k2')).toEqual(FC2);
-    expect(await loadCachedMosaic('k1')).toBeNull();
+    await saveCachedOverlay('k1', OV);
+    const OV2 = { fill: { type: 'FeatureCollection', features: [] } as FeatureCollection,
+      outline: { type: 'FeatureCollection', features: [] } as FeatureCollection };
+    await saveCachedOverlay('k2', OV2);
+    expect(await loadCachedOverlay('k2')).toEqual(OV2);
+    expect(await loadCachedOverlay('k1')).toBeNull();
+  });
+
+  it('formato vecchio (senza outline) = miss, così si ricalcola', async () => {
+    // salva a mano un record vecchio-stile e verifica che load lo ignori
+    const { db } = await import('../../src/data/db');
+    await (await db()).put('overlays', { zonesKey: 'k', fc: FC } as any, 'category-mosaic');
+    expect(await loadCachedOverlay('k')).toBeNull();
   });
 });

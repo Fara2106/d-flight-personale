@@ -1,9 +1,9 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { FeatureCollection } from 'geojson';
 import type { Zone, DatasetMeta } from './ed269.types';
 import type { Drone, Pilot } from '../profiles/profile.types';
+import type { CategoryOverlay } from '../map/fastUnion';
 
-export interface CachedOverlay { zonesKey: string; fc: FeatureCollection }
+export interface CachedOverlay { zonesKey: string; overlay: CategoryOverlay }
 
 export interface DflSchema extends DBSchema {
   zones: { key: string; value: Zone };

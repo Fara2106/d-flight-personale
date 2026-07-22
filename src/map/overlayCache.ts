@@ -1,10 +1,10 @@
-// Cache in IndexedDB del mosaico per categoria: il calcolo sul file reale
+// Cache in IndexedDB dell'overlay per categoria: il calcolo sul file reale
 // costa ~15-20s anche nel worker, ma il risultato dipende SOLO dal dataset
 // importato → si paga una volta per import, poi la vista d'insieme è
-// istantanea a ogni avvio. Si tiene un solo mosaico (l'import sostituisce
+// istantanea a ogni avvio. Si tiene un solo overlay (l'import sostituisce
 // il dataset precedente).
-import type { FeatureCollection } from 'geojson';
 import type { Zone } from '../data/ed269.types';
+import type { CategoryOverlay } from './fastUnion';
 import { db } from '../data/db';
 
 const RECORD_KEY = 'category-mosaic';
@@ -24,19 +24,23 @@ export function zonesKey(zones: Zone[]): string {
   return `${zones.length}:${h.toString(16)}`;
 }
 
-export async function loadCachedMosaic(key: string): Promise<FeatureCollection | null> {
+export async function loadCachedOverlay(key: string): Promise<CategoryOverlay | null> {
   try {
     const rec = await (await db()).get('overlays', RECORD_KEY);
-    return rec && rec.zonesKey === key ? rec.fc : null;
+    if (!rec || rec.zonesKey !== key) return null;
+    const ov = rec.overlay;
+    // record di formato vecchio (senza outline) → miss: si ricalcola
+    if (!ov || !ov.fill || !ov.outline) return null;
+    return ov;
   } catch {
     return null; // cache indisponibile = semplice miss
   }
 }
 
-export async function saveCachedMosaic(key: string, fc: FeatureCollection): Promise<void> {
+export async function saveCachedOverlay(key: string, overlay: CategoryOverlay): Promise<void> {
   try {
-    await (await db()).put('overlays', { zonesKey: key, fc }, RECORD_KEY);
+    await (await db()).put('overlays', { zonesKey: key, overlay }, RECORD_KEY);
   } catch {
-    // salvataggio fallito (quota, DB chiuso): il mosaico verrà ricalcolato
+    // salvataggio fallito (quota, DB chiuso): l'overlay verrà ricalcolato
   }
 }
