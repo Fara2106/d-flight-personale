@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { defineConfig } from 'vitest/config';
+import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 // estensione .ts esplicita: vite.config è typecheckato sotto tsconfig.node
@@ -16,11 +17,45 @@ function buildId(): string {
   catch { return new Date().toISOString(); }
 }
 
+// Content-Security-Policy: whitelist stretta delle sole origini che l'app usa
+// davvero (basemap CARTO, geocoder Photon; tutto il resto è same-origin). Difesa
+// in profondità contro l'iniezione di risorse (il popup usa già solo textContent,
+// niente innerHTML). Iniettata SOLO nella build: in dev romperebbe l'HMR di Vite
+// (script inline + WebSocket). `frame-ancestors`/X-Frame-Options non sono
+// esprimibili via <meta> (servono header HTTP, non disponibili su GitHub Pages).
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-src 'none'",
+  "form-action 'none'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'", // MapLibre/React usano stili inline sugli elementi
+  "img-src 'self' data: blob: https://*.cartocdn.com https://cartocdn.com",
+  "font-src 'self' data:",
+  "worker-src 'self' blob:", // union worker (self) + worker interni MapLibre (blob)
+  "manifest-src 'self'",
+  "connect-src 'self' https://*.cartocdn.com https://cartocdn.com https://photon.komoot.io",
+].join('; ');
+
+const cspPlugin: Plugin = {
+  name: 'inject-csp-prod',
+  transformIndexHtml: {
+    order: 'post',
+    handler(html, ctx) {
+      if (ctx.server) return html; // dev: niente CSP
+      return html.replace('</title>',
+        `</title>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`);
+    },
+  },
+};
+
 export default defineConfig({
   // GitHub Pages serve l'app da https://<user>.github.io/d-flight-personale/
   base: '/d-flight-personale/',
   define: { 'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId()) },
   plugins: [
+    cspPlugin,
     react(),
     VitePWA({
       // niente reload a sorpresa: il SW nuovo resta waiting finché l'utente

@@ -122,7 +122,7 @@ export function VerdictSheet(
         </>
       )}
 
-      <a href="https://www.d-flight.it" target="_blank" rel="noreferrer"
+      <a href="https://www.d-flight.it" target="_blank" rel="noopener noreferrer"
         className="text-sm" style={{ color: 'var(--accent)', display: 'inline-block', marginTop: 8 }}>
         Verifica su D-Flight →
       </a>
