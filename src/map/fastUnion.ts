@@ -140,40 +140,33 @@ export function unionAll(geoms: Poly[]): { merged: PolyFeature[]; failures: numb
   return { merged: level, failures };
 }
 
-/** Union per categoria: raccoglie le geometrie per restrictionType (dedup dei
- *  doppioni D-Flight), ordina dalla più severa e FONDE ogni gruppo. È la parte
- *  COSTOSA del calcolo (union di migliaia di fasce), fatta UNA sola volta: sia
- *  i veli sia i contorni si derivano da qui. Prima veli e contorni univano le
- *  grezze separatamente → calcolo doppio, "lentino" all'import sul file reale
- *  (feedback Lorenzo 2026-07-22, confermato a bench: outlines ≈ 1.0× mosaic). */
-type CategoryUnion = { type: RestrictionType; merged: PolyFeature[] };
-
-function orderedCategoryUnions(zones: Zone[]): CategoryUnion[] {
+/**
+ * Mosaico piatto per categoria (vista d'insieme, zoom bassi): union per
+ * categoria + ritaglio a CASCATA (da ogni categoria si sottrae l'unione delle
+ * più severe → ogni punto UN solo colore). Semantica identica a
+ * zonesToCategoryUnionAsync, ma sincrona e veloce: è il cuore del worker.
+ */
+export function categoryMosaic(zones: Zone[]): FeatureCollection {
+  const features: Feature[] = [];
   const byType = new Map<RestrictionType, Poly[]>();
   const seen = new Set<string>();
   for (const z of zones) {
     const g = z.geometry;
     if (g.type !== 'Polygon' && g.type !== 'MultiPolygon') continue;
-    const k = z.restrictionType + JSON.stringify(g.coordinates); // dedup doppioni
+    // dedup geometrie identiche (doppioni D-Flight)
+    const k = z.restrictionType + JSON.stringify(g.coordinates);
     if (seen.has(k)) continue;
     seen.add(k);
     const arr = byType.get(z.restrictionType);
     if (arr) arr.push(g); else byType.set(z.restrictionType, [g]);
   }
-  return [...byType.entries()]
-    .sort(([a], [b]) => RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b])
-    .map(([type, geoms]) => ({ type, merged: unionAll(geoms).merged }));
-}
-
-/**
- * Mosaico piatto per categoria (veli, un colore per punto): dai blob già fusi,
- * ritaglio a CASCATA (da ogni categoria si sottrae l'unione delle più severe).
- */
-function mosaicFromUnions(ordered: CategoryUnion[]): FeatureCollection {
-  const features: Feature[] = [];
-  let carved: PolyFeature[] = []; // unione delle categorie più severe già emesse
-  for (const { type, merged } of ordered) {
+  const ordered = [...byType.entries()].sort(([a], [b]) =>
+    RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
+  // unione progressiva delle categorie più severe già emesse (per il ritaglio)
+  let carved: PolyFeature[] = [];
+  for (const [type, geoms] of ordered) {
     const props = { restrictionType: type, catUnion: true };
+    const { merged } = unionAll(geoms);
     for (const m of merged) {
       // ritaglio a cascata: via tutto ciò che è coperto da categorie più severe
       let emit: PolyFeature | null = m;
@@ -185,14 +178,10 @@ function mosaicFromUnions(ordered: CategoryUnion[]): FeatureCollection {
       }
       if (emit) features.push({ type: 'Feature', geometry: emit.geometry, properties: props });
     }
+    // le categorie successive vanno bucate anche dove questa è a sua volta ritagliata
     carved = carved.concat(merged);
   }
   return { type: 'FeatureCollection', features };
-}
-
-/** Semantica identica a zonesToCategoryUnionAsync, ma sincrona: cuore del worker. */
-export function categoryMosaic(zones: Zone[]): FeatureCollection {
-  return mosaicFromUnions(orderedCategoryUnions(zones));
 }
 
 /** Insieme (interface) delle due collezioni della vista d'insieme: i veli
@@ -202,37 +191,43 @@ export interface CategoryOverlay { fill: FeatureCollection; outline: FeatureColl
 
 /**
  * Contorni della vista d'insieme come BLOB CUMULATIVI per severità: per ogni
- * soglia il perimetro dell'unione di quella categoria e di tutte le più severe.
- * Ogni confine INTERNO tra due categorie finisce dentro un blob e non si
- * disegna — resta solo il perimetro esterno, colorato per severità. Solo union
- * (robuste), mai difference: le imprecisioni del ritaglio facevano sbucare i
- * bordi uno di fianco all'altro (feedback "le forme fanno pasticcio"
- * 2026-07-22). Parte dai blob GIÀ FUSI (non dalle migliaia di grezze) → il
- * cumulativo unisce POCHE geometrie: costo trascurabile. `none` non ha contorno.
+ * soglia si disegna il perimetro dell'unione di quella categoria e di tutte le
+ * più severe. Così ogni confine INTERNO tra due categorie finisce dentro un
+ * blob e non viene disegnato — resta solo il perimetro esterno, colorato per
+ * severità. Solo union (robuste), mai difference: erano le imprecisioni del
+ * ritaglio a far sbucare i bordi uno di fianco all'altro (feedback Lorenzo
+ * 2026-07-22: "le forme fanno pasticcio"). `none` non ha contorno.
  */
-function outlinesFromUnions(ordered: CategoryUnion[]): FeatureCollection {
+export function categoryOutlines(zones: Zone[]): FeatureCollection {
+  const byType = new Map<RestrictionType, Poly[]>();
+  const seen = new Set<string>();
+  for (const z of zones) {
+    const g = z.geometry;
+    if (g.type !== 'Polygon' && g.type !== 'MultiPolygon') continue;
+    if (z.restrictionType === 'none') continue; // il verde non ha contorno
+    const k = z.restrictionType + JSON.stringify(g.coordinates);
+    if (seen.has(k)) continue; // dedup doppioni D-Flight
+    seen.add(k);
+    const arr = byType.get(z.restrictionType);
+    if (arr) arr.push(g); else byType.set(z.restrictionType, [g]);
+  }
+  // dalla più severa alla meno severa: il blob cumulativo cresce a ogni soglia
+  const ordered = [...byType.entries()].sort(([a], [b]) =>
+    RESTRICTION_ORDER[a] - RESTRICTION_ORDER[b]);
   const features: Feature[] = [];
-  let prev: PolyFeature[] = []; // cumulativo dei blob delle categorie più severe
-  for (const { type, merged } of ordered) {
-    if (type === 'none') continue; // il verde non ha contorno
-    const input = [...prev, ...merged].map((f) => f.geometry as Poly);
-    const { merged: cumulative } = unionAll(input); // union di POCHI blob: veloce
-    for (const m of cumulative) {
+  let prev: Poly[] = []; // geometrie già fuse delle categorie più severe
+  for (const [type, geoms] of ordered) {
+    const { merged } = unionAll([...prev, ...geoms]);
+    for (const m of merged) {
       features.push({ type: 'Feature', geometry: m.geometry,
         properties: { restrictionType: type, catOutline: true } });
     }
-    prev = cumulative;
+    prev = merged.map((m) => m.geometry as Poly); // riusa il lavoro alla soglia dopo
   }
   return { type: 'FeatureCollection', features };
 }
 
-export function categoryOutlines(zones: Zone[]): FeatureCollection {
-  return outlinesFromUnions(orderedCategoryUnions(zones));
-}
-
-/** Le due collezioni della vista d'insieme in un colpo solo (veli + contorni):
- *  la union per categoria (parte costosa) è calcolata UNA volta e condivisa. */
+/** Le due collezioni della vista d'insieme in un colpo solo (veli + contorni). */
 export function categoryOverlay(zones: Zone[]): CategoryOverlay {
-  const ordered = orderedCategoryUnions(zones);
-  return { fill: mosaicFromUnions(ordered), outline: outlinesFromUnions(ordered) };
+  return { fill: categoryMosaic(zones), outline: categoryOutlines(zones) };
 }
