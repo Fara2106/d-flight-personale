@@ -393,8 +393,16 @@ export function MapView(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const themeMounted = useRef(false);
   useEffect(() => {
     const m = map.current; if (!m) return;
+    // al primo mount lo style del costruttore È GIÀ quello del tema corrente:
+    // rifare setStyle qui ricaricherebbe inutilmente lo stile (rifetch di
+    // style.json) e — soprattutto — crea un SECONDO percorso di init
+    // (styledata → addZoneLayers) che va in race con l'handler 'load'
+    // ("Source zones already exists", intermittente solo in prod). Si applica
+    // setStyle solo ai cambi tema veri.
+    if (!themeMounted.current) { themeMounted.current = true; return; }
     m.setStyle(mapStyleUrl(resolvedTheme));
     m.once('styledata', () => {
       boostPlaceLabels(m);
